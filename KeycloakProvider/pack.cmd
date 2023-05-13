@@ -1,1 +1,1 @@
-dotnet pack -c Release /p:Version=2023.5.11
+dotnet pack -c Release
