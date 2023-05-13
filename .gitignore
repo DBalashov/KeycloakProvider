@@ -1,0 +1,6 @@
+**/Debug/**
+**/Release/**
+**/obj/**
+ConsoleApp1
+*.nupkg
+.idea

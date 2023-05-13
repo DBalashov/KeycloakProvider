@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
+  <metadata>
+    <id>KeycloakProvider</id>
+    <version>2023.4.22</version>
+    <title>KeycloakProvider</title>
+    <authors>Denis Balashov and contributors</authors>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <projectUrl>https://github.com/DBalashov/KeycloakProvider</projectUrl>
+    <description>API adapter for Keycloak 19+</description>
+    <releaseNotes>initial release</releaseNotes>
+    <copyright>© 2023 Denis Balashov</copyright>
+    <language>en-US</language>
+    <tags>keycloak</tags>
+  </metadata>
+  <files>
+    <file src="bin\Release\net6.0\KeycloakProvider.dll" target="lib\net6.0" />
+  </files>
+</package>
