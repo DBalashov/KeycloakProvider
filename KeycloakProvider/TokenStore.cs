@@ -16,14 +16,14 @@ sealed class TokenStore
     readonly HttpClient        c;
     readonly SemaphoreSlim     semaphoreSlim = new(1, 1);
 
-    TokenContainer? tokenContainer;
+    InternalTokenContainer? tokenContainer;
 
     public TokenStore(HttpClient c, string url, KeycloakProviderConfig config)
     {
         this.url               = url;
         this.c                 = c;
         adminClientCredentials = Convert.ToBase64String(Encoding.Default.GetBytes($"{config.AdminClientId}:{config.AdminClientSecret}"));
-        credentials            = new NetworkCredential(config.ClientId, config.ClientSecret);
+        credentials            = new NetworkCredential(config.UserName, config.UserSecret);
     }
 
     public async ValueTask<string> GetToken()
@@ -59,35 +59,41 @@ sealed class TokenStore
 
     #region requestToken / refreshToken
 
-    async Task<TokenContainer> requestToken()
+    async Task<InternalTokenContainer> requestToken()
     {
         Debug.WriteLine("Request token", "TokenStore");
-        var req = new HttpRequestMessage(HttpMethod.Post, $"{url}/realms/master/protocol/openid-connect/token");
-        req.Headers.Authorization = new AuthenticationHeaderValue("Basic", adminClientCredentials);
-        req.Content = new StringContent($"username={credentials.UserName}&" +
-                                        $"password={credentials.Password}&" +
-                                        $"grant_type=password",
-                                        Encoding.UTF8,
-                                        "application/x-www-form-urlencoded");
+        var req = new HttpRequestMessage(HttpMethod.Post, $"{url}/realms/master/protocol/openid-connect/token")
+                  {
+                      Content = new FormUrlEncodedContent(new Dictionary<string, string>
+                                                          {
+                                                              ["username"]   = credentials.UserName,
+                                                              ["password"]   = credentials.Password,
+                                                              ["grant_type"] = "password"
+                                                          }),
+                      Headers = {Authorization = new AuthenticationHeaderValue("Basic", adminClientCredentials)}
+                  };
 
         var resp = await c.SendAsync(req);
-        var tc   = (await resp.EnsureSuccessStatusCode().Content.ReadFromJsonAsync<TokenContainer>())!;
+        var tc   = (await resp.EnsureSuccessStatusCode().Content.ReadFromJsonAsync<InternalTokenContainer>())!;
         tc = tc with {Expired = DateTime.UtcNow.AddSeconds(tc.ExpiresIn - 3)};
         Debug.WriteLine($"Request token: {tc.Expired}", "TokenStore");
         return tc;
     }
 
-    async Task<TokenContainer?> refreshToken(string refreshToken)
+    async Task<InternalTokenContainer?> refreshToken(string refreshToken)
     {
         Debug.WriteLine("Refresh token", "TokenStore");
-        var req = new HttpRequestMessage(HttpMethod.Post, $"{url}/realms/master/protocol/openid-connect/token");
-        req.Headers.Authorization = new AuthenticationHeaderValue("Basic", adminClientCredentials);
-        req.Content = new StringContent($"username={credentials.UserName}&" +
-                                        $"password={credentials.Password}&" +
-                                        $"grant_type=refresh_token&"        +
-                                        $"refresh_token={refreshToken}",
-                                        Encoding.UTF8,
-                                        "application/x-www-form-urlencoded");
+        var req = new HttpRequestMessage(HttpMethod.Post, $"{url}/realms/master/protocol/openid-connect/token")
+                  {
+                      Content = new FormUrlEncodedContent(new Dictionary<string, string>
+                                                          {
+                                                              ["username"]      = credentials.UserName,
+                                                              ["password"]      = credentials.Password,
+                                                              ["grant_type"]    = "refresh_token",
+                                                              ["refresh_token"] = refreshToken
+                                                          }),
+                      Headers = {Authorization = new AuthenticationHeaderValue("Basic", adminClientCredentials)}
+                  };
 
         var resp = await c.SendAsync(req);
         if (!resp.IsSuccessStatusCode)
@@ -96,7 +102,7 @@ sealed class TokenStore
             return null;
         }
 
-        var tc = (await resp.Content.ReadFromJsonAsync<TokenContainer>())!;
+        var tc = (await resp.Content.ReadFromJsonAsync<InternalTokenContainer>())!;
         tc = tc with {Expired = DateTime.UtcNow.AddSeconds(tc.ExpiresIn - 3)};
         Debug.WriteLine($"Refreshed token: {tc.Expired}", "TokenStore");
         return tc;
@@ -104,11 +110,11 @@ sealed class TokenStore
 
     #endregion
 
-    sealed record TokenContainer([property: JsonPropertyName("access_token")]
-                                 string AccessToken,
-                                 [property: JsonPropertyName("refresh_token")]
-                                 string RefreshToken,
-                                 [property: JsonPropertyName("expires_in")]
-                                 int ExpiresIn,
-                                 DateTime Expired);
+    sealed record InternalTokenContainer([property: JsonPropertyName("access_token")]
+                                         string AccessToken,
+                                         [property: JsonPropertyName("refresh_token")]
+                                         string RefreshToken,
+                                         [property: JsonPropertyName("expires_in")]
+                                         int ExpiresIn,
+                                         DateTime Expired);
 }

@@ -3,9 +3,9 @@ using System.Net.Http.Json;
 
 namespace KeycloakProvider;
 
-class KeycloakUsersProvider : BaseProvider, IKeycloakUsersProvider
+sealed class KeycloakUsersProvider : BaseProvider, IKeycloakUsersProvider
 {
-    public KeycloakUsersProvider(ProviderSettings settings) : base(settings)
+    public KeycloakUsersProvider(KeycloakProviderConfig config) : base(config)
     {
     }
 
@@ -14,7 +14,7 @@ class KeycloakUsersProvider : BaseProvider, IKeycloakUsersProvider
         ArgumentNullException.ThrowIfNull(userId);
 
         var req  = await BuildMessage($"users/{userId}");
-        var resp = await settings.c.SendAsync(req);
+        var resp = await c.SendAsync(req);
         if (resp.StatusCode == HttpStatusCode.NotFound) return null;
         var user = await resp.EnsureSuccessStatusCode().Content.ReadFromJsonAsync<KeycloakUserInternal>();
         return user == null ? null : convert(user);
@@ -26,7 +26,7 @@ class KeycloakUsersProvider : BaseProvider, IKeycloakUsersProvider
 
         var fields = string.Join("&", parms.ToObject().Select(p => p.Key + "=" + p.Value));
         var req    = await BuildMessage($"users?exact={(exact ? "true" : "false")}&{fields}");
-        var resp   = await settings.c.SendAsync(req);
+        var resp   = await c.SendAsync(req);
         var users  = await resp.EnsureSuccessStatusCode().Content.ReadFromJsonAsync<KeycloakUserInternal[]>();
         return (users ?? Array.Empty<KeycloakUserInternal>()).Select(convert).ToArray();
     }
@@ -38,7 +38,7 @@ class KeycloakUsersProvider : BaseProvider, IKeycloakUsersProvider
         ArgumentNullException.ThrowIfNull(request);
 
         var req  = await BuildMessage("users", HttpMethod.Post, request.ToObject());
-        var resp = await settings.c.SendAsync(req);
+        var resp = await c.SendAsync(req);
         resp.EnsureSuccessStatusCode();
     }
 
@@ -47,7 +47,7 @@ class KeycloakUsersProvider : BaseProvider, IKeycloakUsersProvider
         ArgumentNullException.ThrowIfNull(userId);
 
         var req  = await BuildMessage($"users/{userId}", HttpMethod.Delete);
-        var resp = await settings.c.SendAsync(req);
+        var resp = await c.SendAsync(req);
         if (resp.StatusCode == HttpStatusCode.NotFound) return false;
         resp.EnsureSuccessStatusCode();
         return true;
@@ -61,7 +61,7 @@ class KeycloakUsersProvider : BaseProvider, IKeycloakUsersProvider
         if (!request.Values.Any()) throw new ArgumentException("Request empty");
 
         var req  = await BuildMessage($"users/{userId}", HttpMethod.Put, request.ToObject());
-        var resp = await settings.c.SendAsync(req);
+        var resp = await c.SendAsync(req);
         if (resp.StatusCode == HttpStatusCode.NotFound) return false;
         resp.EnsureSuccessStatusCode();
         return true;
@@ -74,7 +74,7 @@ class KeycloakUsersProvider : BaseProvider, IKeycloakUsersProvider
         ArgumentNullException.ThrowIfNull(userId);
 
         var req  = await BuildMessage($"users/{userId}/groups", HttpMethod.Get);
-        var resp = await settings.c.SendAsync(req);
+        var resp = await c.SendAsync(req);
         if (resp.StatusCode == HttpStatusCode.NotFound) return Array.Empty<KeycloakUserGroup>();
         return await resp.EnsureSuccessStatusCode().Content.ReadFromJsonAsync<KeycloakUserGroup[]>() ?? Array.Empty<KeycloakUserGroup>();
     }
@@ -86,7 +86,7 @@ class KeycloakUsersProvider : BaseProvider, IKeycloakUsersProvider
         ArgumentNullException.ThrowIfNull(userId);
 
         var req  = await BuildMessage($"users/{userId}", HttpMethod.Put, new {enabled = newState});
-        var resp = await settings.c.SendAsync(req);
+        var resp = await c.SendAsync(req);
         if (resp.StatusCode == HttpStatusCode.NotFound) return false;
 
         resp.EnsureSuccessStatusCode();
@@ -109,7 +109,7 @@ class KeycloakUsersProvider : BaseProvider, IKeycloakUsersProvider
         }
 
         var req  = await BuildMessage($"users/{userId}", HttpMethod.Put, new {attributes = existingAttributes});
-        var resp = await settings.c.SendAsync(req);
+        var resp = await c.SendAsync(req);
         if (resp.StatusCode == HttpStatusCode.NotFound) return false;
         await resp.EnsureSuccessStatusCode().Content.ReadAsStringAsync();
         return true;
@@ -123,7 +123,7 @@ class KeycloakUsersProvider : BaseProvider, IKeycloakUsersProvider
         if (!userIds.Any()) return Array.Empty<string>();
 
         var req         = await BuildMessage("users?enabled=false");
-        var resp        = await settings.c.SendAsync(req);
+        var resp        = await c.SendAsync(req);
         var respContent = await resp.EnsureSuccessStatusCode().Content.ReadFromJsonAsync<KeycloakUserInternal[]>();
         return respContent!.Where(p => userIds.Contains(p.id)).Select(p => p.id).ToArray();
     }
@@ -134,7 +134,7 @@ class KeycloakUsersProvider : BaseProvider, IKeycloakUsersProvider
         ArgumentNullException.ThrowIfNull(password);
 
         var req  = await BuildMessage($"users/{userId}/reset-password", HttpMethod.Put, new {type = "password", value = password, temporary = false});
-        var resp = await settings.c.SendAsync(req);
+        var resp = await c.SendAsync(req);
         resp.EnsureSuccessStatusCode();
     }
 
@@ -143,7 +143,7 @@ class KeycloakUsersProvider : BaseProvider, IKeycloakUsersProvider
         ArgumentNullException.ThrowIfNull(userId);
 
         var req  = await BuildMessage($"users/{userId}/logout", HttpMethod.Post);
-        var resp = await settings.c.SendAsync(req);
+        var resp = await c.SendAsync(req);
         resp.EnsureSuccessStatusCode();
     }
 
@@ -152,7 +152,7 @@ class KeycloakUsersProvider : BaseProvider, IKeycloakUsersProvider
         ArgumentNullException.ThrowIfNull(userId);
 
         var req  = await BuildMessage($"users/{userId}/sessions", HttpMethod.Get);
-        var resp = await settings.c.SendAsync(req);
+        var resp = await c.SendAsync(req);
         if (resp.StatusCode == HttpStatusCode.NotFound) return Array.Empty<KeycloakUserSession>();
 
         resp.EnsureSuccessStatusCode();

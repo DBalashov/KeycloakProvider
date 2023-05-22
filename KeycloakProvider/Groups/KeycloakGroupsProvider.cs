@@ -3,16 +3,16 @@ using System.Net.Http.Json;
 
 namespace KeycloakProvider;
 
-class KeycloakGroupsProvider : BaseProvider, IKeycloakGroupsProvider
+sealed class KeycloakGroupsProvider : BaseProvider, IKeycloakGroupsProvider
 {
-    public KeycloakGroupsProvider(ProviderSettings settings) : base(settings)
+    public KeycloakGroupsProvider(KeycloakProviderConfig config) : base(config)
     {
     }
 
     public async Task<KeycloakGroup[]> GetItems()
     {
         var req    = await BuildMessage("groups");
-        var resp   = await settings.c.SendAsync(req);
+        var resp   = await c.SendAsync(req);
         var groups = await resp.EnsureSuccessStatusCode().Content.ReadFromJsonAsync<KeycloakGroup[]>();
         return groups ?? Array.Empty<KeycloakGroup>();
     }
@@ -22,7 +22,7 @@ class KeycloakGroupsProvider : BaseProvider, IKeycloakGroupsProvider
         ArgumentNullException.ThrowIfNull(groupId);
         
         var req  = await BuildMessage($"groups/{groupId}");
-        var resp = await settings.c.SendAsync(req);
+        var resp = await c.SendAsync(req);
         if (resp.StatusCode == HttpStatusCode.NotFound) return null;
 
         var group = await resp.Content.ReadFromJsonAsync<KeycloakGroupDetailInternal>();
@@ -34,7 +34,7 @@ class KeycloakGroupsProvider : BaseProvider, IKeycloakGroupsProvider
         ArgumentNullException.ThrowIfNull(groupId);
         
         var req  = await BuildMessage($"groups/{groupId}", HttpMethod.Delete);
-        var resp = await settings.c.SendAsync(req);
+        var resp = await c.SendAsync(req);
         if (resp.StatusCode == HttpStatusCode.NotFound) return false;
         resp.EnsureSuccessStatusCode();
         return true;
@@ -46,7 +46,7 @@ class KeycloakGroupsProvider : BaseProvider, IKeycloakGroupsProvider
         if (!request.Values.Any()) throw new ArgumentException("Request empty");
         
         var req  = await BuildMessage("groups", HttpMethod.Post, request.ToObject());
-        var resp = await settings.c.SendAsync(req);
+        var resp = await c.SendAsync(req);
         resp.EnsureSuccessStatusCode();
     }
     
@@ -57,7 +57,7 @@ class KeycloakGroupsProvider : BaseProvider, IKeycloakGroupsProvider
         if (!request.Values.Any()) throw new ArgumentException("Request empty");
         
         var req  = await BuildMessage($"groups/{groupId}", HttpMethod.Put, request.ToObject());
-        var resp = await settings.c.SendAsync(req);
+        var resp = await c.SendAsync(req);
         if (resp.StatusCode == HttpStatusCode.NotFound) return false;
         resp.EnsureSuccessStatusCode();
         return true;

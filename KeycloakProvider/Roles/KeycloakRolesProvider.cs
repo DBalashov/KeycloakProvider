@@ -3,16 +3,16 @@ using System.Net.Http.Json;
 
 namespace KeycloakProvider;
 
-class KeycloakRolesProvider : BaseProvider, IKeycloakRolesProvider
+sealed class KeycloakRolesProvider : BaseProvider, IKeycloakRolesProvider
 {
-    public KeycloakRolesProvider(ProviderSettings settings) : base(settings)
+    public KeycloakRolesProvider(KeycloakProviderConfig config) : base(config)
     {
     }
 
     public async Task<KeycloakRole[]> GetItems()
     {
         var req   = await BuildMessage("roles?briefRepresentation=false");
-        var resp  = await settings.c.SendAsync(req);
+        var resp  = await c.SendAsync(req);
         var roles = await resp.EnsureSuccessStatusCode().Content.ReadFromJsonAsync<KeycloakRoleInternal[]>();
         return (roles ?? Array.Empty<KeycloakRoleInternal>())
               .Select(p => new KeycloakRole(p.Id, p.Name, p.Description, p.Composite, p.ClientRole, p.ContainerId,
@@ -25,7 +25,7 @@ class KeycloakRolesProvider : BaseProvider, IKeycloakRolesProvider
         ArgumentNullException.ThrowIfNull(roleName);
 
         var req  = await BuildMessage("roles/" + roleName);
-        var resp = await settings.c.SendAsync(req);
+        var resp = await c.SendAsync(req);
         if (resp.StatusCode == HttpStatusCode.NotFound) return null;
 
         var p = await resp.EnsureSuccessStatusCode().Content.ReadFromJsonAsync<KeycloakRoleInternal>();
@@ -40,7 +40,7 @@ class KeycloakRolesProvider : BaseProvider, IKeycloakRolesProvider
         ArgumentNullException.ThrowIfNull(roleName);
 
         var req  = await BuildMessage("roles/" + roleName, HttpMethod.Delete);
-        var resp = await settings.c.SendAsync(req);
+        var resp = await c.SendAsync(req);
         if (resp.StatusCode == HttpStatusCode.NotFound) return;
         resp.EnsureSuccessStatusCode();
     }
