@@ -1,23 +1,16 @@
 ﻿using System.Net;
 using System.Net.Http.Json;
-using System.Text.Json.Serialization;
 
 namespace KeycloakProvider;
 
-public class KeycloakProviderAuthImp : IKeycloakProviderAuth
+public class KeycloakProviderAuthImp : BaseProvider<KeycloakProviderAuthConfig>
 {
-    readonly HttpClient        c;
-    readonly string            Url;
-    readonly NetworkCredential clientCredentials;
     readonly TokensStore?      tokensStore;
+    readonly NetworkCredential clientCredentials;
 
-    public KeycloakProviderAuthImp(KeycloakProviderAuthConfig config, TokensStore? tokensStore = null)
+    public KeycloakProviderAuthImp(KeycloakProviderAuthConfig config, TokensStore? tokensStore = null) : base(config)
     {
-        this.tokensStore = tokensStore;
-
-        c         = new HttpClient();
-        c.Timeout = config.RequestTimeout == TimeSpan.Zero ? TimeSpan.FromSeconds(3) : config.RequestTimeout;
-
+        this.tokensStore  = tokensStore;
         clientCredentials = new NetworkCredential(config.ClientId, config.ClientSecret);
 
         var url = string.IsNullOrEmpty(config.ServerUrl)
@@ -40,8 +33,10 @@ public class KeycloakProviderAuthImp : IKeycloakProviderAuth
                                                 ["username"]      = userName,
                                                 ["password"]      = userPassword
                                             });
-        var resp = await c.PostAsync(Url, req);
-        return await convert(resp);
+        var resp           = await c.PostAsync(Url, req);
+        var tokenContainer = await convert(resp);
+        tokensStore?.AddToken(tokenContainer);
+        return tokenContainer;
     }
 
     public async Task<TokenContainer> RefreshToken(string refreshToken)
@@ -59,34 +54,34 @@ public class KeycloakProviderAuthImp : IKeycloakProviderAuth
         var resp = await c.PostAsync(Url, req);
         return await convert(resp);
     }
-    
-    public ValueTask<string?> GetToken(string accessToken) => 
-        tokensStore?.GetToken(accessToken) ?? ValueTask.FromResult((string?) null);
 
-    async Task<TokenContainer> convert(HttpResponseMessage resp)
+    public ValueTask<string?> GetToken(string accessToken)
     {
-        var r = await resp.EnsureSuccessStatusCode().Content.ReadFromJsonAsync<InternalTokenContainer>();
-        return new TokenContainer(r!.AccessToken,
-                                  DateTime.UtcNow.AddSeconds(r.AccessExpiresIn),
-                                  r.RefreshToken,
-                                  DateTime.UtcNow.AddSeconds(r.RefreshExpiresIn),
-                                  (r.Scope ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries),
-                                  r.SessionState);
+        ArgumentNullException.ThrowIfNull(accessToken);
+
+        if (tokensStore == null) throw new NotSupportedException("Token store not configured (must be pass in constructor)");
+        return tokensStore.GetToken(accessToken);
     }
 
     #region internals
 
-    public sealed record InternalTokenContainer([property: JsonPropertyName("access_token")]
-                                                string AccessToken,
-                                                [property: JsonPropertyName("refresh_token")]
-                                                string RefreshToken,
-                                                [property: JsonPropertyName("expires_in")]
-                                                int AccessExpiresIn,
-                                                [property: JsonPropertyName("refresh_expires_in")]
-                                                int RefreshExpiresIn,
-                                                [property: JsonPropertyName("session_state")]
-                                                string SessionState,
-                                                [property: JsonPropertyName("scope")] string Scope);
+    async Task<TokenContainer> convert(HttpResponseMessage resp)
+    {
+        var r = await resp.EnsureSuccessStatusCode().Content.ReadFromJsonAsync<InternalTokenContainer>();
+        return new TokenContainer(r!.access_token,
+                                  DateTime.UtcNow.AddSeconds(r.expires_in),
+                                  r.refresh_token,
+                                  DateTime.UtcNow.AddSeconds(r.refresh_expires_in),
+                                  (r.scope ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries),
+                                  r.session_state);
+    }
+
+    public sealed record InternalTokenContainer(string access_token,
+                                                string refresh_token,
+                                                int    expires_in,
+                                                int    refresh_expires_in,
+                                                string session_state,
+                                                string scope);
 
     /*
     {

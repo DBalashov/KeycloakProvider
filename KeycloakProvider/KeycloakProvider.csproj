@@ -28,6 +28,9 @@
       <Compile Update="KeycloakProviderAuthConfig.cs">
         <DependentUpon>KeycloakProviderAuth.cs</DependentUpon>
       </Compile>
+      <Compile Update="BaseProviderAdmin.cs">
+        <DependentUpon>BaseProvider.cs</DependentUpon>
+      </Compile>
     </ItemGroup>
 
 </Project>

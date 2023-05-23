@@ -6,6 +6,10 @@ public interface IKeycloakProviderAuth
 
     Task<TokenContainer> RefreshToken(string refreshToken);
 
+    /// <summary>
+    /// Find refresh token in TokensStore and refresh access token.
+    /// Returned value is new access token and stored in TokensStore again.
+    /// </summary>
     ValueTask<string?> GetToken(string accessToken);
 }
 

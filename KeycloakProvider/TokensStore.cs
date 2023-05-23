@@ -5,6 +5,11 @@ using Microsoft.Extensions.Caching.Memory;
 
 namespace KeycloakProvider;
 
+/// <summary>
+/// Store refresh token as dictionary[hash_of_access_token : refresh_token] in memory and automatically refresh them if needed
+/// (while GetToken is called)
+/// Access token NOT STORED, only hash 
+/// </summary>
 public sealed class TokensStore
 {
     readonly IKeycloakProviderAuth authProvider;

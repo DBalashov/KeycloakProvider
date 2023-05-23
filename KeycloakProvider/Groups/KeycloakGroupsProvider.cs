@@ -3,7 +3,7 @@ using System.Net.Http.Json;
 
 namespace KeycloakProvider;
 
-sealed class KeycloakGroupsProvider : BaseProvider, IKeycloakGroupsProvider
+sealed class KeycloakGroupsProvider : BaseProviderAdmin, IKeycloakGroupsProvider
 {
     public KeycloakGroupsProvider(KeycloakProviderConfig config) : base(config)
     {
