@@ -1,7 +1,4 @@
-﻿using System.Net;
-using System.Net.Http.Json;
-
-namespace KeycloakProvider;
+﻿namespace KeycloakProvider;
 
 sealed class KeycloakGroupsProvider : BaseProviderAdmin, IKeycloakGroupsProvider
 {
@@ -12,55 +9,46 @@ sealed class KeycloakGroupsProvider : BaseProviderAdmin, IKeycloakGroupsProvider
     public async Task<KeycloakGroup[]> GetItems()
     {
         var req    = await BuildMessage("groups");
-        var resp   = await c.SendAsync(req);
-        var groups = await resp.EnsureSuccessStatusCode().Content.ReadFromJsonAsync<KeycloakGroup[]>();
+        var groups = await SendAndGetResponse<KeycloakGroup[]>(req);
+
         return groups ?? Array.Empty<KeycloakGroup>();
     }
 
     public async Task<KeycloakGroupDetail?> GetById(string groupId)
     {
         ArgumentNullException.ThrowIfNull(groupId);
-        
-        var req  = await BuildMessage($"groups/{groupId}");
-        var resp = await c.SendAsync(req);
-        if (resp.StatusCode == HttpStatusCode.NotFound) return null;
 
-        var group = await resp.Content.ReadFromJsonAsync<KeycloakGroupDetailInternal>();
+        var req   = await BuildMessage($"groups/{groupId}");
+        var group = await SendAndGetResponse<KeycloakGroupDetailInternal>(req);
+
         return group != null ? convert(group) : null;
     }
-    
+
     public async Task<bool> Delete(string groupId)
     {
         ArgumentNullException.ThrowIfNull(groupId);
-        
+
         var req  = await BuildMessage($"groups/{groupId}", HttpMethod.Delete);
-        var resp = await c.SendAsync(req);
-        if (resp.StatusCode == HttpStatusCode.NotFound) return false;
-        resp.EnsureSuccessStatusCode();
-        return true;
+        return await SendWithoutResponse(req);
     }
-    
+
     public async Task Create(KeycloakUpdateGroup request)
     {
         ArgumentNullException.ThrowIfNull(request);
         if (!request.Values.Any()) throw new ArgumentException("Request empty");
-        
-        var req  = await BuildMessage("groups", HttpMethod.Post, request.ToObject());
-        var resp = await c.SendAsync(req);
-        resp.EnsureSuccessStatusCode();
+
+        var req  = await BuildMessage("groups", HttpMethod.Post, request);
+        await SendWithoutResponse(req, false);
     }
-    
+
     public async Task<bool> Update(string groupId, KeycloakUpdateGroup request)
     {
         ArgumentNullException.ThrowIfNull(groupId);
         ArgumentNullException.ThrowIfNull(request);
         if (!request.Values.Any()) throw new ArgumentException("Request empty");
-        
-        var req  = await BuildMessage($"groups/{groupId}", HttpMethod.Put, request.ToObject());
-        var resp = await c.SendAsync(req);
-        if (resp.StatusCode == HttpStatusCode.NotFound) return false;
-        resp.EnsureSuccessStatusCode();
-        return true;
+
+        var req  = await BuildMessage($"groups/{groupId}", HttpMethod.Put, request);
+        return await SendWithoutResponse(req);
     }
 
     KeycloakGroupDetail convert(KeycloakGroupDetailInternal from) =>
@@ -72,7 +60,7 @@ sealed class KeycloakGroupsProvider : BaseProviderAdmin, IKeycloakGroupsProvider
                                               string                        Name,
                                               string                        Path,
                                               string[]                      RealmRoles,
-                                              KeycloakGroupAccess Access,
+                                              KeycloakGroupAccess           Access,
                                               Dictionary<string, string[]>  Attributes,
                                               KeycloakGroupDetailInternal[] Subgroups);
 }

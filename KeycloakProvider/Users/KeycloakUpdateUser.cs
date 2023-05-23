@@ -1,6 +1,6 @@
 ﻿namespace KeycloakProvider;
 
-public sealed class KeycloakUpdateUser : KeycloakModifyUserRequest
+public sealed class KeycloakUpdateUser : KeycloakModifyUser
 {
     public KeycloakUpdateUser Email(string email, bool emailVerified = true)
     {

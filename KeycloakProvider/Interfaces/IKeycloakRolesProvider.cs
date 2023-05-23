@@ -6,7 +6,7 @@ public interface IKeycloakRolesProvider
 
     Task<KeycloakRole?> Get(string roleName);
 
-    Task Delete(string roleName);
+    Task<bool> Delete(string roleName);
     
     // Task<KeycloakGroupDetail?> GetById(string groupId);
     //

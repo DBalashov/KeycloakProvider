@@ -4,7 +4,6 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text;
-using System.Text.Json.Serialization;
 
 namespace KeycloakProvider;
 
@@ -34,7 +33,7 @@ sealed class TokenStore
             semaphoreSlim.Release();
             var remainSeconds = tokenContainer.Expired.Subtract(DateTime.UtcNow).TotalSeconds.ToString("F2", CultureInfo.InvariantCulture);
             Debug.WriteLine($"Cached token: {remainSeconds} remains", "TokenStore");
-            return tokenContainer.AccessToken;
+            return tokenContainer.access_token;
         }
 
         try
@@ -42,8 +41,8 @@ sealed class TokenStore
             var oldTokenContainer = tokenContainer;
             tokenContainer = null;
 
-            if (oldTokenContainer?.RefreshToken != null)
-                tokenContainer = await refreshToken(oldTokenContainer.RefreshToken);
+            if (oldTokenContainer?.refresh_token != null)
+                tokenContainer = await refreshToken(oldTokenContainer.refresh_token);
 
             tokenContainer ??= await requestToken();
         }
@@ -52,7 +51,7 @@ sealed class TokenStore
             semaphoreSlim.Release();
         }
 
-        return tokenContainer.AccessToken;
+        return tokenContainer.access_token;
     }
 
     #region requestToken / refreshToken
@@ -73,7 +72,7 @@ sealed class TokenStore
 
         var resp = await c.SendAsync(req);
         var tc   = (await resp.EnsureSuccessStatusCode().Content.ReadFromJsonAsync<InternalTokenContainer>())!;
-        tc = tc with {Expired = DateTime.UtcNow.AddSeconds(tc.ExpiresIn - 3)};
+        tc = tc with {Expired = DateTime.UtcNow.AddSeconds(tc.expires_in - 3)};
         Debug.WriteLine($"Request token: {tc.Expired}", "TokenStore");
         return tc;
     }
@@ -101,18 +100,15 @@ sealed class TokenStore
         }
 
         var tc = (await resp.Content.ReadFromJsonAsync<InternalTokenContainer>())!;
-        tc = tc with {Expired = DateTime.UtcNow.AddSeconds(tc.ExpiresIn - 3)};
+        tc = tc with {Expired = DateTime.UtcNow.AddSeconds(tc.expires_in - 3)};
         Debug.WriteLine($"Refreshed token: {tc.Expired}", "TokenStore");
         return tc;
     }
 
     #endregion
 
-    sealed record InternalTokenContainer([property: JsonPropertyName("access_token")]
-                                         string AccessToken,
-                                         [property: JsonPropertyName("refresh_token")]
-                                         string RefreshToken,
-                                         [property: JsonPropertyName("expires_in")]
-                                         int ExpiresIn,
+    sealed record InternalTokenContainer(string access_token,
+                                         string refresh_token,
+                                         int expires_in,
                                          DateTime Expired);
 }

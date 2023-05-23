@@ -1,7 +1,4 @@
-﻿using System.Net;
-using System.Net.Http.Json;
-
-namespace KeycloakProvider;
+﻿namespace KeycloakProvider;
 
 sealed class KeycloakUsersProvider : BaseProviderAdmin, IKeycloakUsersProvider
 {
@@ -14,9 +11,8 @@ sealed class KeycloakUsersProvider : BaseProviderAdmin, IKeycloakUsersProvider
         ArgumentNullException.ThrowIfNull(userId);
 
         var req  = await BuildMessage($"users/{userId}");
-        var resp = await c.SendAsync(req);
-        if (resp.StatusCode == HttpStatusCode.NotFound) return null;
-        var user = await resp.EnsureSuccessStatusCode().Content.ReadFromJsonAsync<KeycloakUserInternal>();
+        var user = await SendAndGetResponse<KeycloakUserInternal>(req);
+        
         return user == null ? null : convert(user);
     }
 
@@ -24,10 +20,9 @@ sealed class KeycloakUsersProvider : BaseProviderAdmin, IKeycloakUsersProvider
     {
         ArgumentNullException.ThrowIfNull(parms);
 
-        var fields = string.Join("&", parms.ToObject().Select(p => p.Key + "=" + p.Value));
-        var req    = await BuildMessage($"users?exact={(exact ? "true" : "false")}&{fields}");
-        var resp   = await c.SendAsync(req);
-        var users  = await resp.EnsureSuccessStatusCode().Content.ReadFromJsonAsync<KeycloakUserInternal[]>();
+        var req   = await BuildMessage($"users?exact={(exact ? "true" : "false")}&{parms.AsQueryString()}");
+        var users = await SendAndGetResponse<KeycloakUserInternal[]>(req);
+        
         return (users ?? Array.Empty<KeycloakUserInternal>()).Select(convert).ToArray();
     }
 
@@ -37,9 +32,8 @@ sealed class KeycloakUsersProvider : BaseProviderAdmin, IKeycloakUsersProvider
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        var req  = await BuildMessage("users", HttpMethod.Post, request.ToObject());
-        var resp = await c.SendAsync(req);
-        resp.EnsureSuccessStatusCode();
+        var req = await BuildMessage("users", HttpMethod.Post, request);
+        await SendWithoutResponse(req, false);
     }
 
     public async Task<bool> Delete(string userId)
@@ -47,10 +41,7 @@ sealed class KeycloakUsersProvider : BaseProviderAdmin, IKeycloakUsersProvider
         ArgumentNullException.ThrowIfNull(userId);
 
         var req  = await BuildMessage($"users/{userId}", HttpMethod.Delete);
-        var resp = await c.SendAsync(req);
-        if (resp.StatusCode == HttpStatusCode.NotFound) return false;
-        resp.EnsureSuccessStatusCode();
-        return true;
+        return await SendWithoutResponse(req);
     }
 
     public async Task<bool> Update(string userId, KeycloakUpdateUser request)
@@ -60,11 +51,8 @@ sealed class KeycloakUsersProvider : BaseProviderAdmin, IKeycloakUsersProvider
 
         if (!request.Values.Any()) throw new ArgumentException("Request empty");
 
-        var req  = await BuildMessage($"users/{userId}", HttpMethod.Put, request.ToObject());
-        var resp = await c.SendAsync(req);
-        if (resp.StatusCode == HttpStatusCode.NotFound) return false;
-        resp.EnsureSuccessStatusCode();
-        return true;
+        var req  = await BuildMessage($"users/{userId}", HttpMethod.Put, request);
+        return await SendWithoutResponse(req);
     }
 
     #endregion
@@ -74,9 +62,8 @@ sealed class KeycloakUsersProvider : BaseProviderAdmin, IKeycloakUsersProvider
         ArgumentNullException.ThrowIfNull(userId);
 
         var req  = await BuildMessage($"users/{userId}/groups", HttpMethod.Get);
-        var resp = await c.SendAsync(req);
-        if (resp.StatusCode == HttpStatusCode.NotFound) return Array.Empty<KeycloakUserGroup>();
-        return await resp.EnsureSuccessStatusCode().Content.ReadFromJsonAsync<KeycloakUserGroup[]>() ?? Array.Empty<KeycloakUserGroup>();
+        var groups = await SendAndGetResponse<KeycloakUserGroup[]>(req);
+        return groups ?? Array.Empty<KeycloakUserGroup>();
     }
 
     #region ChangeState / UpdateAttributes
@@ -85,12 +72,8 @@ sealed class KeycloakUsersProvider : BaseProviderAdmin, IKeycloakUsersProvider
     {
         ArgumentNullException.ThrowIfNull(userId);
 
-        var req  = await BuildMessage($"users/{userId}", HttpMethod.Put, new {enabled = newState});
-        var resp = await c.SendAsync(req);
-        if (resp.StatusCode == HttpStatusCode.NotFound) return false;
-
-        resp.EnsureSuccessStatusCode();
-        return true;
+        var req  = await BuildMessage($"users/{userId}", HttpMethod.Put, new KeycloakChangeState(newState));
+        return await SendWithoutResponse(req);
     }
 
     public async Task<bool> UpdateAttributes(string userId, Dictionary<string, string?> attributes)
@@ -108,11 +91,8 @@ sealed class KeycloakUsersProvider : BaseProviderAdmin, IKeycloakUsersProvider
             else existingAttributes[attr.Key] = attr.Value;
         }
 
-        var req  = await BuildMessage($"users/{userId}", HttpMethod.Put, new {attributes = existingAttributes});
-        var resp = await c.SendAsync(req);
-        if (resp.StatusCode == HttpStatusCode.NotFound) return false;
-        await resp.EnsureSuccessStatusCode().Content.ReadAsStringAsync();
-        return true;
+        var req  = await BuildMessage($"users/{userId}", HttpMethod.Put, new KeycloakUpdateAttribute(existingAttributes));
+        return await SendWithoutResponse(req);
     }
 
     #endregion
@@ -122,10 +102,10 @@ sealed class KeycloakUsersProvider : BaseProviderAdmin, IKeycloakUsersProvider
         ArgumentNullException.ThrowIfNull(userIds);
         if (!userIds.Any()) return Array.Empty<string>();
 
-        var req         = await BuildMessage("users?enabled=false");
-        var resp        = await c.SendAsync(req);
-        var respContent = await resp.EnsureSuccessStatusCode().Content.ReadFromJsonAsync<KeycloakUserInternal[]>();
-        return respContent!.Where(p => userIds.Contains(p.id)).Select(p => p.id).ToArray();
+        var req   = await BuildMessage("users?enabled=false");
+        var users = await SendAndGetResponse<KeycloakUserInternal[]>(req);
+        
+        return (users ?? Array.Empty<KeycloakUserInternal>())!.Where(p => userIds.Contains(p.id)).Select(p => p.id).ToArray();
     }
 
     public async Task ResetPassword(string userId, string password)
@@ -133,30 +113,24 @@ sealed class KeycloakUsersProvider : BaseProviderAdmin, IKeycloakUsersProvider
         ArgumentNullException.ThrowIfNull(userId);
         ArgumentNullException.ThrowIfNull(password);
 
-        var req  = await BuildMessage($"users/{userId}/reset-password", HttpMethod.Put, new {type = "password", value = password, temporary = false});
-        var resp = await c.SendAsync(req);
-        resp.EnsureSuccessStatusCode();
+        var req = await BuildMessage($"users/{userId}/reset-password", HttpMethod.Put, new KeycloakResetPassword(password));
+        await SendWithoutResponse(req);
     }
 
     public async Task Logout(string userId)
     {
         ArgumentNullException.ThrowIfNull(userId);
 
-        var req  = await BuildMessage($"users/{userId}/logout", HttpMethod.Post);
-        var resp = await c.SendAsync(req);
-        resp.EnsureSuccessStatusCode();
+        var req = await BuildMessage($"users/{userId}/logout", HttpMethod.Post);
+        await SendWithoutResponse(req);
     }
 
     public async Task<KeycloakUserSession[]> GetSessions(string userId)
     {
         ArgumentNullException.ThrowIfNull(userId);
 
-        var req  = await BuildMessage($"users/{userId}/sessions", HttpMethod.Get);
-        var resp = await c.SendAsync(req);
-        if (resp.StatusCode == HttpStatusCode.NotFound) return Array.Empty<KeycloakUserSession>();
-
-        resp.EnsureSuccessStatusCode();
-        var items = await resp.Content.ReadFromJsonAsync<KeycloakUserSessionInternal[]>();
+        var req   = await BuildMessage($"users/{userId}/sessions", HttpMethod.Get);
+        var items = await SendAndGetResponse<KeycloakUserSessionInternal[]>(req);
 
         return (items ?? Array.Empty<KeycloakUserSessionInternal>())
               .Select(p => new KeycloakUserSession(p.id, p.username, p.userid, p.ipaddress,

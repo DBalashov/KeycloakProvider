@@ -24,7 +24,7 @@ public sealed class KeycloakFindUser
         return this;
     }
 
-    internal Dictionary<string, string> ToObject() => filters;
+    internal string AsQueryString() => string.Join("&", filters.Select(p => p.Key + "=" + p.Value));
 
     public override string ToString() => string.Join("&", filters.Select(p => p.Key + "=" + p.Value));
 }
