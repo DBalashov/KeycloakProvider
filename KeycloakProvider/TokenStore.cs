@@ -20,7 +20,7 @@ sealed class TokenStore
 
     public TokenStore(HttpClient c, string url, KeycloakProviderConfig config)
     {
-        this.url               = url;
+        this.url               = $"{url}/realms/master/protocol/openid-connect/token";
         this.c                 = c;
         adminClientCredentials = Convert.ToBase64String(Encoding.Default.GetBytes($"{config.AdminClientId}:{config.AdminClientSecret}"));
         credentials            = new NetworkCredential(config.UserName, config.UserSecret);
@@ -28,8 +28,6 @@ sealed class TokenStore
 
     public async ValueTask<string> GetToken()
     {
-        // https://dl.dropboxusercontent.com/s/ckxcj6z4w87su9a/202304_211838_chrome.png
-        // https://dl.dropboxusercontent.com/s/urnr4mysj5ri7uq/202304_214512_chrome.png
         await semaphoreSlim.WaitAsync();
         if (tokenContainer != null && tokenContainer.Expired > DateTime.UtcNow)
         {
@@ -62,7 +60,7 @@ sealed class TokenStore
     async Task<InternalTokenContainer> requestToken()
     {
         Debug.WriteLine("Request token", "TokenStore");
-        var req = new HttpRequestMessage(HttpMethod.Post, $"{url}/realms/master/protocol/openid-connect/token")
+        var req = new HttpRequestMessage(HttpMethod.Post, url)
                   {
                       Content = new FormUrlEncodedContent(new Dictionary<string, string>
                                                           {
@@ -83,7 +81,7 @@ sealed class TokenStore
     async Task<InternalTokenContainer?> refreshToken(string refreshToken)
     {
         Debug.WriteLine("Refresh token", "TokenStore");
-        var req = new HttpRequestMessage(HttpMethod.Post, $"{url}/realms/master/protocol/openid-connect/token")
+        var req = new HttpRequestMessage(HttpMethod.Post, url)
                   {
                       Content = new FormUrlEncodedContent(new Dictionary<string, string>
                                                           {

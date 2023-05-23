@@ -6,9 +6,10 @@ namespace KeycloakProvider;
 
 abstract class BaseProvider
 {
-    protected readonly string     Url;
-    protected readonly string     Realm;
-    protected readonly TokenStore TokenStore;
+    readonly TokenStore tokenStore;
+
+    protected readonly string Url;
+    protected readonly string Realm;
 
     protected readonly HttpClient c = new();
 
@@ -20,16 +21,18 @@ abstract class BaseProvider
                   ? new Uri(config.Authority).GetComponents(UriComponents.Host | UriComponents.Scheme, UriFormat.Unescaped)
                   : config.ServerUrl;
 
-        TokenStore = new TokenStore(c, Url, config);
+        tokenStore = new TokenStore(c, Url, config);
         Realm      = config.Realm;
     }
 
     protected async Task<HttpRequestMessage> BuildMessage(string suffix, HttpMethod? method = null, object? body = null)
     {
-        var token = await TokenStore.GetToken();
+        var token = await tokenStore.GetToken();
 
-        var req = new HttpRequestMessage(method ?? HttpMethod.Get, $"{Url}/admin/realms/{Realm}/{suffix}");
-        req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        var req = new HttpRequestMessage(method ?? HttpMethod.Get, $"{Url}/admin/realms/{Realm}/{suffix}")
+                  {
+                      Headers = {Authorization = new AuthenticationHeaderValue("Bearer", token)}
+                  };
 
         if (body != null)
             req.Content = new StringContent(JsonSerializer.Serialize(body), Encoding.UTF8, "application/json");

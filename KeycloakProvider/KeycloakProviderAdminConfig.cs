@@ -1,5 +1,9 @@
 ﻿namespace KeycloakProvider;
 
+/// <summary>
+/// https://dl.dropboxusercontent.com/s/ckxcj6z4w87su9a/202304_211838_chrome.png
+/// https://dl.dropboxusercontent.com/s/urnr4mysj5ri7uq/202304_214512_chrome.png
+/// </summary>
 /// <param name="Authority">url to server, including schema and ending by /realms/{realm} suffix, like "https://serverName.zone/realms/someRealm"</param>
 /// <param name="UserName">user name in 'master' realm with 'admin' role</param>
 /// <param name="AdminClientId">client id in 'master' realm</param>

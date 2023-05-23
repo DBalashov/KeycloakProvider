@@ -8,23 +8,25 @@ public class KeycloakProviderAuthImp : IKeycloakProviderAuth
 {
     readonly HttpClient        c;
     readonly string            Url;
-    readonly string            Realm;
     readonly NetworkCredential clientCredentials;
+    readonly TokensStore?      tokensStore;
 
-    public KeycloakProviderAuthImp(KeycloakProviderAuthConfig config)
+    public KeycloakProviderAuthImp(KeycloakProviderAuthConfig config, TokensStore? tokensStore = null)
     {
+        this.tokensStore = tokensStore;
+
         c         = new HttpClient();
         c.Timeout = config.RequestTimeout == TimeSpan.Zero ? TimeSpan.FromSeconds(3) : config.RequestTimeout;
 
-        Realm             = config.Realm;
         clientCredentials = new NetworkCredential(config.ClientId, config.ClientSecret);
 
-        Url = string.IsNullOrEmpty(config.ServerUrl)
-                  ? new Uri(config.Authority).GetComponents(UriComponents.Host | UriComponents.Scheme, UriFormat.Unescaped)
-                  : config.ServerUrl;
+        var url = string.IsNullOrEmpty(config.ServerUrl)
+                      ? new Uri(config.Authority).GetComponents(UriComponents.Host | UriComponents.Scheme, UriFormat.Unescaped)
+                      : config.ServerUrl;
+        Url = $"{url}/realms/{config.Realm}/protocol/openid-connect/token";
     }
 
-    public async Task<TokenContainer> Authenticate(string userName, string userPassword)
+    public async Task<TokenContainer> GetToken(string userName, string userPassword)
     {
         ArgumentNullException.ThrowIfNull(userName);
         ArgumentNullException.ThrowIfNull(userPassword);
@@ -36,13 +38,13 @@ public class KeycloakProviderAuthImp : IKeycloakProviderAuth
                                                 ["client_id"]     = clientCredentials.UserName,
                                                 ["client_secret"] = clientCredentials.Password,
                                                 ["username"]      = userName,
-                                                ["password"]      = userPassword,
+                                                ["password"]      = userPassword
                                             });
-        var resp = await c.PostAsync($"{Url}/realms/{Realm}/protocol/openid-connect/token", req);
+        var resp = await c.PostAsync(Url, req);
         return await convert(resp);
     }
 
-    public async Task<TokenContainer> Refresh(string refreshToken)
+    public async Task<TokenContainer> RefreshToken(string refreshToken)
     {
         ArgumentNullException.ThrowIfNull(refreshToken);
 
@@ -52,11 +54,14 @@ public class KeycloakProviderAuthImp : IKeycloakProviderAuth
                                                 ["scope"]         = "openid",
                                                 ["client_id"]     = clientCredentials.UserName,
                                                 ["client_secret"] = clientCredentials.Password,
-                                                ["refresh_token"] = refreshToken,
+                                                ["refresh_token"] = refreshToken
                                             });
-        var resp = await c.PostAsync($"{Url}/realms/{Realm}/protocol/openid-connect/token", req);
+        var resp = await c.PostAsync(Url, req);
         return await convert(resp);
     }
+    
+    public ValueTask<string?> GetToken(string accessToken) => 
+        tokensStore?.GetToken(accessToken) ?? ValueTask.FromResult((string?) null);
 
     async Task<TokenContainer> convert(HttpResponseMessage resp)
     {

@@ -2,9 +2,11 @@
 
 public interface IKeycloakProviderAuth
 {
-    Task<TokenContainer> Authenticate(string userName, string userPassword);
+    Task<TokenContainer> GetToken(string userName, string userPassword);
 
-    Task<TokenContainer> Refresh(string refreshToken);
+    Task<TokenContainer> RefreshToken(string refreshToken);
+
+    ValueTask<string?> GetToken(string accessToken);
 }
 
 public sealed record TokenContainer(string   AccessToken,
