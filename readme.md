@@ -74,10 +74,9 @@ await provider.Users.Delete(user.ID);
 ## Authenticate via API with Direct Access grants
     
 ```csharp
-var config = new KeycloakProviderConfig("realmName", "https://some-keycloak-server/realms/realmName",
-                                        "web-api", "xxxxxxxxxxxxxx"); // client id and secret in realm
-                                        
-var kp = new KeycloakProviderAuthImp(new KeycloakProviderAuthConfig(config.Realm, config.Authority, clientId, clientSecret));
+var config = new KeycloakProviderAuthConfig("realmName", "https://some-keycloak-server/realms/realmName",
+                                            "web-api", "xxxxxxxxxxxxxx"); // client id and secret in realm
+var kp = new KeycloakProviderAuthImp(config);
 var accessToken = (await kp.GetToken("a@b.com", "12345678")).AccessToken;
 ```
 
