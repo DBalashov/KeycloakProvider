@@ -12,7 +12,7 @@ public interface IKeycloakRolesProvider
 
     Task<KeycloakRole?> GetById(string roleId);
 
-    Task<KeycloakRole> Create(KeycloakCreateRole request);
+    Task Create(KeycloakCreateRole request);
 
     Task<bool> Update(string roleId, KeycloakUpdateRole request);
 }

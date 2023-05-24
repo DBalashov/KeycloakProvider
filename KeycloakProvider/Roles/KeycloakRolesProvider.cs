@@ -48,14 +48,13 @@ sealed class KeycloakRolesProvider : BaseProviderAdmin, IKeycloakRolesProvider
         return await SendWithoutResponse(req);
     }
 
-    public async Task<KeycloakRole> Create(KeycloakCreateRole request)
+    public async Task Create(KeycloakCreateRole request)
     {
         ArgumentNullException.ThrowIfNull(request);
         if (!request.Values.Any()) throw new ArgumentException(Errors.RequestEmpty);
 
         var req = await BuildMessage("roles", HttpMethod.Post, request);
         await SendWithoutResponse(req, false);
-        return (await Get(request.Name))!;
     }
 
     public async Task<bool> Update(string roleId, KeycloakUpdateRole request)
