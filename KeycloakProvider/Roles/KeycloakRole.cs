@@ -1,6 +1,6 @@
 ﻿namespace KeycloakProvider;
 
-public sealed record KeycloakRole(string                     Id,
+public sealed record KeycloakRole(string                     ID,
                                   string                     Name,
                                   string                     Description,
                                   bool                       Composite,

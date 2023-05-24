@@ -4,7 +4,7 @@ public sealed class KeycloakFindUser
 {
     readonly Dictionary<string, string> filters = new();
 
-    public KeycloakFindUser(KeycloakFilter filter, string value) => 
+    public KeycloakFindUser(KeycloakFilter filter, string value) =>
         AddFilter(filter, value);
 
     public KeycloakFindUser AddFilter(KeycloakFilter filter, string value)
@@ -17,7 +17,7 @@ public sealed class KeycloakFindUser
                         KeycloakFilter.MailVerified => "emailVerified",
                         KeycloakFilter.FirstName    => "firstName",
                         KeycloakFilter.LastName     => "lastName",
-                        _                           => throw new NotSupportedException(filter + " not supported")
+                        _                           => throw new NotSupportedException(string.Format(Errors.NotSupported, filter))
                     };
 
         filters[field] = value;

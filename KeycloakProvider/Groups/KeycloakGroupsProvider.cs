@@ -28,16 +28,16 @@ sealed class KeycloakGroupsProvider : BaseProviderAdmin, IKeycloakGroupsProvider
     {
         ArgumentNullException.ThrowIfNull(groupId);
 
-        var req  = await BuildMessage($"groups/{groupId}", HttpMethod.Delete);
+        var req = await BuildMessage($"groups/{groupId}", HttpMethod.Delete);
         return await SendWithoutResponse(req);
     }
 
-    public async Task Create(KeycloakUpdateGroup request)
+    public async Task Create(KeycloakCreateRole request)
     {
         ArgumentNullException.ThrowIfNull(request);
-        if (!request.Values.Any()) throw new ArgumentException("Request empty");
+        if (!request.Values.Any()) throw new ArgumentException(Errors.RequestEmpty);
 
-        var req  = await BuildMessage("groups", HttpMethod.Post, request);
+        var req = await BuildMessage("groups", HttpMethod.Post, request);
         await SendWithoutResponse(req, false);
     }
 
@@ -45,11 +45,26 @@ sealed class KeycloakGroupsProvider : BaseProviderAdmin, IKeycloakGroupsProvider
     {
         ArgumentNullException.ThrowIfNull(groupId);
         ArgumentNullException.ThrowIfNull(request);
-        if (!request.Values.Any()) throw new ArgumentException("Request empty");
+        if (!request.Values.Any()) throw new ArgumentException(Errors.RequestEmpty);
 
-        var req  = await BuildMessage($"groups/{groupId}", HttpMethod.Put, request);
+        var req = await BuildMessage($"groups/{groupId}", HttpMethod.Put, request);
         return await SendWithoutResponse(req);
     }
+
+    public async Task<bool> UpdateAttributes(string groupId, Dictionary<string, string?> attributes)
+    {
+        ArgumentNullException.ThrowIfNull(groupId);
+        ArgumentNullException.ThrowIfNull(attributes);
+
+        var group = await GetById(groupId);
+        if (group == null) return false;
+
+        var newAttributes = group.Attributes.MergeAttributes(attributes);
+        var req           = await BuildMessage($"groups/{groupId}", HttpMethod.Put, new KeycloakUpdateAttribute(newAttributes));
+        return await SendWithoutResponse(req);
+    }
+
+    #region internals
 
     KeycloakGroupDetail convert(KeycloakGroupDetailInternal from) =>
         new(from.ID, from.Name, from.Path, from.RealmRoles, from.Access,
@@ -63,4 +78,6 @@ sealed class KeycloakGroupsProvider : BaseProviderAdmin, IKeycloakGroupsProvider
                                               KeycloakGroupAccess           Access,
                                               Dictionary<string, string[]>  Attributes,
                                               KeycloakGroupDetailInternal[] Subgroups);
+
+    #endregion
 }

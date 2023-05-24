@@ -59,4 +59,18 @@ public static class UsersExtenders
                                   };
         return o;
     }
+
+    public static Dictionary<string, string> MergeAttributes(this Dictionary<string, string>? existingAttributes, Dictionary<string, string?> attributes)
+    {
+        ArgumentNullException.ThrowIfNull(attributes);
+
+        existingAttributes ??= new Dictionary<string, string>();
+        foreach (var attr in attributes)
+        {
+            if (attr.Value == null) existingAttributes.Remove(attr.Key);
+            else existingAttributes[attr.Key] = attr.Value;
+        }
+
+        return existingAttributes;
+    }
 }

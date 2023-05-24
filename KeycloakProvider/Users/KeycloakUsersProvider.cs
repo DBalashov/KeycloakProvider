@@ -12,7 +12,7 @@ sealed class KeycloakUsersProvider : BaseProviderAdmin, IKeycloakUsersProvider
 
         var req  = await BuildMessage($"users/{userId}");
         var user = await SendAndGetResponse<KeycloakUserInternal>(req);
-        
+
         return user == null ? null : convert(user);
     }
 
@@ -22,7 +22,7 @@ sealed class KeycloakUsersProvider : BaseProviderAdmin, IKeycloakUsersProvider
 
         var req   = await BuildMessage($"users?exact={(exact ? "true" : "false")}&{parms.AsQueryString()}");
         var users = await SendAndGetResponse<KeycloakUserInternal[]>(req);
-        
+
         return (users ?? Array.Empty<KeycloakUserInternal>()).Select(convert).ToArray();
     }
 
@@ -40,7 +40,7 @@ sealed class KeycloakUsersProvider : BaseProviderAdmin, IKeycloakUsersProvider
     {
         ArgumentNullException.ThrowIfNull(userId);
 
-        var req  = await BuildMessage($"users/{userId}", HttpMethod.Delete);
+        var req = await BuildMessage($"users/{userId}", HttpMethod.Delete);
         return await SendWithoutResponse(req);
     }
 
@@ -49,9 +49,9 @@ sealed class KeycloakUsersProvider : BaseProviderAdmin, IKeycloakUsersProvider
         ArgumentNullException.ThrowIfNull(userId);
         ArgumentNullException.ThrowIfNull(request);
 
-        if (!request.Values.Any()) throw new ArgumentException("Request empty");
+        if (!request.Values.Any()) throw new ArgumentException(Errors.RequestEmpty);
 
-        var req  = await BuildMessage($"users/{userId}", HttpMethod.Put, request);
+        var req = await BuildMessage($"users/{userId}", HttpMethod.Put, request);
         return await SendWithoutResponse(req);
     }
 
@@ -61,7 +61,7 @@ sealed class KeycloakUsersProvider : BaseProviderAdmin, IKeycloakUsersProvider
     {
         ArgumentNullException.ThrowIfNull(userId);
 
-        var req  = await BuildMessage($"users/{userId}/groups", HttpMethod.Get);
+        var req    = await BuildMessage($"users/{userId}/groups", HttpMethod.Get);
         var groups = await SendAndGetResponse<KeycloakUserGroup[]>(req);
         return groups ?? Array.Empty<KeycloakUserGroup>();
     }
@@ -72,7 +72,7 @@ sealed class KeycloakUsersProvider : BaseProviderAdmin, IKeycloakUsersProvider
     {
         ArgumentNullException.ThrowIfNull(userId);
 
-        var req  = await BuildMessage($"users/{userId}", HttpMethod.Put, new KeycloakChangeState(newState));
+        var req = await BuildMessage($"users/{userId}", HttpMethod.Put, new KeycloakChangeState(newState));
         return await SendWithoutResponse(req);
     }
 
@@ -84,14 +84,8 @@ sealed class KeycloakUsersProvider : BaseProviderAdmin, IKeycloakUsersProvider
         var user = await GetById(userId);
         if (user == null) return false;
 
-        var existingAttributes = user.Attributes ?? new Dictionary<string, string>();
-        foreach (var attr in attributes)
-        {
-            if (attr.Value == null) existingAttributes.Remove(attr.Key);
-            else existingAttributes[attr.Key] = attr.Value;
-        }
-
-        var req  = await BuildMessage($"users/{userId}", HttpMethod.Put, new KeycloakUpdateAttribute(existingAttributes));
+        var newAttributes = user.Attributes.MergeAttributes(attributes);
+        var req           = await BuildMessage($"users/{userId}", HttpMethod.Put, new KeycloakUpdateAttribute(newAttributes));
         return await SendWithoutResponse(req);
     }
 
@@ -104,7 +98,7 @@ sealed class KeycloakUsersProvider : BaseProviderAdmin, IKeycloakUsersProvider
 
         var req   = await BuildMessage("users?enabled=false");
         var users = await SendAndGetResponse<KeycloakUserInternal[]>(req);
-        
+
         return (users ?? Array.Empty<KeycloakUserInternal>())!.Where(p => userIds.Contains(p.id)).Select(p => p.id).ToArray();
     }
 

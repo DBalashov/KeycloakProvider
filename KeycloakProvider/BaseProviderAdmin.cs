@@ -46,6 +46,7 @@ abstract class BaseProviderAdmin : BaseProvider<KeycloakProviderConfig>
             if (resp.StatusCode == HttpStatusCode.NotFound) return false;
         }
 
+        var s = await resp.Content.ReadAsStringAsync();
         resp.EnsureSuccessStatusCode();
         return true;
     }

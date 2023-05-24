@@ -59,7 +59,7 @@ public class KeycloakProviderAuthImp : BaseProvider<KeycloakProviderAuthConfig>
     {
         ArgumentNullException.ThrowIfNull(accessToken);
 
-        if (tokensStore == null) throw new NotSupportedException("Token store not configured (must be pass in constructor)");
+        if (tokensStore == null) throw new NotSupportedException(Errors.TokenStoreNotConfigured);
         return tokensStore.GetToken(accessToken);
     }
 

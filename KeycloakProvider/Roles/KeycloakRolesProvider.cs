@@ -20,19 +20,65 @@ sealed class KeycloakRolesProvider : BaseProviderAdmin, IKeycloakRolesProvider
     {
         ArgumentNullException.ThrowIfNull(roleName);
 
-        var req = await BuildMessage("roles/" + roleName);
-        var role   = await SendAndGetResponse<KeycloakRoleInternal>(req);
+        var req  = await BuildMessage($"roles/{roleName}");
+        var role = await SendAndGetResponse<KeycloakRoleInternal>(req);
         return role == null
                    ? null
                    : new KeycloakRole(role.Id, role.Name, role.Description, role.Composite, role.ClientRole, role.ContainerId,
                                       role.Attributes.ToDictionary(a => a.Key, a => a.Value.First()));
     }
 
-    public async Task<bool> Delete(string roleName)
+    public async Task<KeycloakRole?> GetById(string roleId)
     {
-        ArgumentNullException.ThrowIfNull(roleName);
+        ArgumentNullException.ThrowIfNull(roleId);
 
-        var req = await BuildMessage("roles/" + roleName, HttpMethod.Delete);
+        var req  = await BuildMessage($"roles-by-id/{roleId}");
+        var role = await SendAndGetResponse<KeycloakRoleInternal>(req);
+        return role == null
+                   ? null
+                   : new KeycloakRole(role.Id, role.Name, role.Description, role.Composite, role.ClientRole, role.ContainerId,
+                                      role.Attributes.ToDictionary(a => a.Key, a => a.Value.First()));
+    }
+
+    public async Task<bool> Delete(string roleId)
+    {
+        ArgumentNullException.ThrowIfNull(roleId);
+
+        var req = await BuildMessage($"roles-by-id/{roleId}", HttpMethod.Delete);
+        return await SendWithoutResponse(req);
+    }
+
+    public async Task<KeycloakRole> Create(KeycloakCreateRole request)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        if (!request.Values.Any()) throw new ArgumentException(Errors.RequestEmpty);
+
+        var req = await BuildMessage("roles", HttpMethod.Post, request);
+        await SendWithoutResponse(req, false);
+        return (await Get(request.Name))!;
+    }
+
+    public async Task<bool> Update(string roleId, KeycloakUpdateRole request)
+    {
+        ArgumentNullException.ThrowIfNull(roleId);
+        ArgumentNullException.ThrowIfNull(request);
+
+        if (!request.Values.Any()) throw new ArgumentException(Errors.RequestEmpty);
+
+        var req = await BuildMessage($"roles-by-id/{roleId}", HttpMethod.Put, request);
+        return await SendWithoutResponse(req);
+    }
+
+    public async Task<bool> UpdateAttributes(string roleId, Dictionary<string, string?> attributes)
+    {
+        ArgumentNullException.ThrowIfNull(roleId);
+        ArgumentNullException.ThrowIfNull(attributes);
+
+        var group = await GetById(roleId);
+        if (group == null) return false;
+
+        var newAttributes = group.Attributes.MergeAttributes(attributes);
+        var req           = await BuildMessage($"roles-by-id/{roleId}", HttpMethod.Put, new KeycloakUpdateAttribute(newAttributes));
         return await SendWithoutResponse(req);
     }
 
