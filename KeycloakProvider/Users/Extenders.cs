@@ -30,7 +30,7 @@ public static class UsersExtenders
 
         if (lastName != null)
             o.Values["lastName"] = lastName;
-        
+
         return o;
     }
 
@@ -49,17 +49,21 @@ public static class UsersExtenders
         return o;
     }
 
-    public static Dictionary<string, string> MergeAttributes(this Dictionary<string, string>? existingAttributes, Dictionary<string, string?> attributes)
+    public static Dictionary<string, object> MergeAttributes(this Dictionary<string, string>? existingAttributes, Dictionary<string, string?> attributes)
     {
         ArgumentNullException.ThrowIfNull(attributes);
 
-        existingAttributes ??= new Dictionary<string, string>();
+        var r = new Dictionary<string, object>();
+        if (existingAttributes != null)
+            foreach (var attr in existingAttributes)
+                r[attr.Key] = new[] {attr.Value};
+
         foreach (var attr in attributes)
         {
-            if (attr.Value == null) existingAttributes.Remove(attr.Key);
-            else existingAttributes[attr.Key] = attr.Value;
+            if (attr.Value == null) r.Remove(attr.Key);
+            else r[attr.Key] = attr.Value;
         }
 
-        return existingAttributes;
+        return r;
     }
 }

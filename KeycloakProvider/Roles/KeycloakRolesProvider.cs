@@ -73,11 +73,11 @@ sealed class KeycloakRolesProvider : BaseProviderAdmin, IKeycloakRolesProvider
         ArgumentNullException.ThrowIfNull(roleId);
         ArgumentNullException.ThrowIfNull(attributes);
 
-        var group = await GetById(roleId);
-        if (group == null) return false;
+        var role = await GetById(roleId);
+        if (role == null) return false;
 
-        var newAttributes = group.Attributes.MergeAttributes(attributes);
-        var req           = await BuildMessage($"roles-by-id/{roleId}", HttpMethod.Put, new KeycloakUpdateAttribute(newAttributes));
+        var newAttributes = role.Attributes.MergeAttributes(attributes);
+        var req           = await BuildMessage($"roles-by-id/{roleId}", HttpMethod.Put, new KeycloakUpdateRoleAttributes(role.Name, newAttributes));
         return await SendWithoutResponse(req);
     }
 

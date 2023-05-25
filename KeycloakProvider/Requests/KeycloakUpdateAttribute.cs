@@ -1,7 +1,6 @@
 ﻿namespace KeycloakProvider;
 
-sealed class KeycloakUpdateAttribute : KeycloakRequest 
+class KeycloakUpdateAttribute : KeycloakRequest
 {
-    public KeycloakUpdateAttribute(Dictionary<string, string> attributes) => 
-        Values["attributes"] = attributes;
+    public KeycloakUpdateAttribute(Dictionary<string, object> attributes) => Values["attributes"] = attributes;
 }

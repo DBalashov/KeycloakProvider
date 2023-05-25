@@ -60,7 +60,7 @@ sealed class KeycloakGroupsProvider : BaseProviderAdmin, IKeycloakGroupsProvider
         if (group == null) return false;
 
         var newAttributes = group.Attributes.MergeAttributes(attributes);
-        var req           = await BuildMessage($"groups/{groupId}", HttpMethod.Put, new KeycloakUpdateAttribute(newAttributes));
+        var req           = await BuildMessage($"groups/{groupId}", HttpMethod.Put, new KeycloakUpdateGroupAttributes(group.Name, newAttributes));
         return await SendWithoutResponse(req);
     }
 

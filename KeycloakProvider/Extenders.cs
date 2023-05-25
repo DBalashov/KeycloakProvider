@@ -5,19 +5,7 @@ public static class Extenders
     public static T Attributes<T>(this T o, Dictionary<string, string> attributes) where T : IAttributableEntity
     {
         ArgumentNullException.ThrowIfNull(attributes);
-        o.Values["attributes"] = attributes;
-        return o;
-    }
-
-    public static T AddAttribute<T>(this T o, string name, string value) where T : IAttributableEntity
-    {
-        ArgumentNullException.ThrowIfNull(name);
-        ArgumentNullException.ThrowIfNull(value);
-
-        if (!o.Values.TryGetValue("attributes", out var attr))
-            o.Values.Add("attributes", attr = new Dictionary<string, string>());
-
-        ((Dictionary<string, string>) attr)[name] = value;
+        o.Values["attributes"] = attributes.ToDictionary(p => p.Key, p => (object) new[] {p.Value});
         return o;
     }
 
