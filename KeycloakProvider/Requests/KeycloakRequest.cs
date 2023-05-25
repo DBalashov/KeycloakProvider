@@ -3,9 +3,9 @@ using System.Text.Json;
 
 namespace KeycloakProvider;
 
-public abstract class KeycloakRequest
+public abstract class KeycloakRequest : IAttributableEntity
 {
-    internal readonly Dictionary<string, object> Values = new();
+    public Dictionary<string, object> Values { get; } = new();
 
     internal HttpContent AsHttpContent() => new StringContent(JsonSerializer.Serialize(Values), Encoding.UTF8, "application/json");
     

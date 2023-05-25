@@ -1,6 +1,6 @@
 ﻿namespace KeycloakProvider;
 
-public sealed class KeycloakUpdateGroup : KeycloakRequest
+public sealed class KeycloakUpdateGroup : KeycloakModifyGroupRequest
 {
     public KeycloakUpdateGroup Id(string groupId)
     {

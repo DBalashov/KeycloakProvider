@@ -26,25 +26,6 @@ public static class UsersExtenders
         return o;
     }
 
-    public static T Attributes<T>(this T o, Dictionary<string, string> attributes) where T : KeycloakModifyUser
-    {
-        ArgumentNullException.ThrowIfNull(attributes);
-        o.Values["attributes"] = attributes;
-        return o;
-    }
-
-    public static T AddAttribute<T>(this T o, string name, string value) where T : KeycloakModifyUser
-    {
-        ArgumentNullException.ThrowIfNull(name);
-        ArgumentNullException.ThrowIfNull(value);
-
-        if (!o.Values.TryGetValue("attributes", out var attr))
-            o.Values.Add("attributes", attr = new Dictionary<string, string>());
-
-        ((Dictionary<string, string>) attr)[name] = value;
-        return o;
-    }
-
     public static T Password<T>(this T o, string password, bool temporary = false) where T : KeycloakModifyUser
     {
         ArgumentNullException.ThrowIfNull(password);

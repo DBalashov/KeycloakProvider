@@ -32,7 +32,7 @@ sealed class KeycloakGroupsProvider : BaseProviderAdmin, IKeycloakGroupsProvider
         return await SendWithoutResponse(req);
     }
 
-    public async Task Create(KeycloakCreateRole request)
+    public async Task Create(KeycloakCreateGroup request)
     {
         ArgumentNullException.ThrowIfNull(request);
         if (!request.Values.Any()) throw new ArgumentException(Errors.RequestEmpty);

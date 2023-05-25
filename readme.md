@@ -71,6 +71,32 @@ foreach(var g in await provider.Users.GetGroups(user.ID))
 await provider.Users.Delete(user.ID);
 ```
 
+## Groups management
+
+```csharp
+// create group with some attributes
+await provider.Groups.Create(new KeycloakCreateGroup("Test group").AddAttribute("attr1", "value1"));
+
+// get group list
+var groups = await provider.Groups.GetItems();
+foreach (var group in groups)
+    Console.WriteLine($"{group.ID}: {group.Name}, {group.Path}");
+
+// update group
+var g = groups.First(p => p.Name == "Test group");
+await provider.Groups.Update(g.ID, new KeycloakUpdateGroup().AddAttribute("attr2", "value2"));
+
+// update group attributes
+await provider.Groups.UpdateAttributes(g.ID, new Dictionary<string, string?>()
+                                             {
+                                                 ["attr2"] = null,
+                                                 ["attr1"] = "new value 1"
+                                             });
+
+// delete group
+await provider.Groups.Delete(g.ID);
+```
+
 ## Authenticate via API with Direct Access grants
     
 ```csharp

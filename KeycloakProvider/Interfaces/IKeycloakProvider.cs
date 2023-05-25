@@ -11,3 +11,13 @@ public interface IKeycloakProvider
     /// <summary> Roles related operations </summary>
     IKeycloakRolesProvider Roles { get; }
 }
+
+public interface IAttributableEntity
+{
+    Dictionary<string, object> Values { get; }
+}
+
+public interface INamedEntity : IAttributableEntity
+{
+    
+}

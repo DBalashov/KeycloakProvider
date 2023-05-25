@@ -13,11 +13,4 @@ public sealed class KeycloakUpdateRole : KeycloakRequest
         Values["description"] = description ?? "";
         return this;
     }
-    
-    public KeycloakUpdateRole Name(string name)
-    {
-        ArgumentNullException.ThrowIfNull(name);
-        Values["name"] = name;
-        return this;
-    }
 }

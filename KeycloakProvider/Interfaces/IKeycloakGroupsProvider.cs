@@ -8,7 +8,7 @@ public interface IKeycloakGroupsProvider
 
     Task<bool> Delete(string groupId);
 
-    Task Create(KeycloakCreateRole request);
+    Task Create(KeycloakCreateGroup request);
 
     Task<bool> Update(string groupId, KeycloakUpdateGroup request);
 
