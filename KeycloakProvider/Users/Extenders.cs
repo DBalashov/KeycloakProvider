@@ -61,7 +61,7 @@ public static class UsersExtenders
         foreach (var attr in attributes)
         {
             if (attr.Value == null) r.Remove(attr.Key);
-            else r[attr.Key] = attr.Value;
+            else r[attr.Key] = new[] {attr.Value};
         }
 
         return r;
