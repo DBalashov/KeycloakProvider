@@ -1,7 +1,6 @@
 ﻿namespace KeycloakProvider;
 
-sealed class KeycloakChangeState : KeycloakRequest 
+sealed class KeycloakChangeState : KeycloakModifyUser
 {
-    public KeycloakChangeState(bool newState) => 
-        Values["enabled"] = newState;
+    public KeycloakChangeState(bool newState) => this.Enabled(newState);
 }

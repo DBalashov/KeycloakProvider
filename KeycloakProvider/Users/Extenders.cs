@@ -12,7 +12,14 @@ public static class UsersExtenders
     {
         ArgumentNullException.ThrowIfNull(userName);
         o.Values["username"] = userName;
+        return o;
+    }
 
+    public static T Email<T>(this T o, string email, bool emailVerified = true) where T : KeycloakModifyUser
+    {
+        ArgumentNullException.ThrowIfNull(email);
+        o.Values["email"]         = email;
+        o.Values["emailVerified"] = emailVerified;
         return o;
     }
 
@@ -23,6 +30,7 @@ public static class UsersExtenders
 
         if (lastName != null)
             o.Values["lastName"] = lastName;
+        
         return o;
     }
 
