@@ -1,7 +1,11 @@
-﻿namespace KeycloakProvider;
+﻿using System.Diagnostics.CodeAnalysis;
 
-public record KeycloakGroup(string ID, string Name, string Path, KeycloakGroup[] Subgroups);
+namespace KeycloakProvider;
 
+[ExcludeFromCodeCoverage]
+public sealed record KeycloakGroup(string ID, string Name, string Path, KeycloakGroup[] Subgroups);
+
+[ExcludeFromCodeCoverage]
 public sealed record KeycloakGroupDetail(string                     ID,
                                          string                     Name,
                                          string                     Path,
@@ -10,6 +14,7 @@ public sealed record KeycloakGroupDetail(string                     ID,
                                          Dictionary<string, string> Attributes,
                                          KeycloakGroupDetail[]      Subgroups);
 
+[ExcludeFromCodeCoverage]
 public sealed record KeycloakGroupAccess(bool View,
                                          bool Manage,
                                          bool ManageMembership);

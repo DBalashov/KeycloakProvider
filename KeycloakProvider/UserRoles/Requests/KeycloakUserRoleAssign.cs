@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Text;
 using System.Text.Json;
 
 namespace KeycloakProvider;
@@ -17,6 +18,7 @@ sealed class KeycloakUserRoleAssign : KeycloakRequest
         return this;
     }
 
+    [ExcludeFromCodeCoverage]
     sealed record UserRoleItem(string id,
                                string name,
                                bool   clientRole,

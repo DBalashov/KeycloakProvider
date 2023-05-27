@@ -4,3 +4,4 @@
 ConsoleApp1
 *.nupkg
 .idea
+*.user

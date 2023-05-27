@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Text;
 using System.Text.Json;
 
 namespace KeycloakProvider;
@@ -9,5 +10,6 @@ public abstract class KeycloakRequest
 
     internal virtual HttpContent AsHttpContent() => new StringContent(JsonSerializer.Serialize(Values), Encoding.UTF8, "application/json");
     
+    [ExcludeFromCodeCoverage]
     public override string ToString() => string.Join("&", Values.Select(p => p.Key + "=" + p.Value));
 }

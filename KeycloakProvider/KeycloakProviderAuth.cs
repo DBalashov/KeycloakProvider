@@ -3,12 +3,13 @@ using System.Net.Http.Json;
 
 namespace KeycloakProvider;
 
-public class KeycloakProviderAuthImp : BaseProvider<KeycloakProviderAuthConfig>
+public class KeycloakProviderAuthImp : BaseProvider<KeycloakProviderAuthConfig>, IKeycloakProviderAuth
 {
-    readonly TokensStore?      tokensStore;
+    TokensStore? tokensStore;
+
     readonly NetworkCredential clientCredentials;
 
-    public KeycloakProviderAuthImp(KeycloakProviderAuthConfig config, TokensStore? tokensStore = null) : base(config)
+    public KeycloakProviderAuthImp(KeycloakProviderAuthConfig config, HttpClient? c = null, TokensStore? tokensStore = null) : base(config, c ?? new HttpClient())
     {
         this.tokensStore  = tokensStore;
         clientCredentials = new NetworkCredential(config.ClientId, config.ClientSecret);
@@ -18,6 +19,8 @@ public class KeycloakProviderAuthImp : BaseProvider<KeycloakProviderAuthConfig>
                       : config.ServerUrl;
         Url = $"{url}/realms/{config.Realm}/protocol/openid-connect/token";
     }
+
+    internal void AttachTokenStore(TokensStore tokensStore) => this.tokensStore = tokensStore;
 
     public async Task<TokenContainer> GetToken(string userName, string userPassword)
     {
@@ -76,12 +79,12 @@ public class KeycloakProviderAuthImp : BaseProvider<KeycloakProviderAuthConfig>
                                   r.session_state);
     }
 
-    public sealed record InternalTokenContainer(string access_token,
-                                                string refresh_token,
-                                                int    expires_in,
-                                                int    refresh_expires_in,
-                                                string session_state,
-                                                string scope);
+    internal sealed record InternalTokenContainer(string access_token,
+                                                  string refresh_token,
+                                                  int    expires_in,
+                                                  int    refresh_expires_in,
+                                                  string session_state,
+                                                  string scope);
 
     /*
     {

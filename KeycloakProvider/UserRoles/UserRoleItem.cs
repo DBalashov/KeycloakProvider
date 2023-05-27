@@ -1,5 +1,8 @@
-﻿namespace KeycloakProvider;
+﻿using System.Diagnostics.CodeAnalysis;
 
+namespace KeycloakProvider;
+
+[ExcludeFromCodeCoverage]
 public sealed record UserRoleItem(string  ID,
                                   string  Name,
                                   string? Description,

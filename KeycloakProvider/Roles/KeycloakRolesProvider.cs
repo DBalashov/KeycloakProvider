@@ -1,8 +1,10 @@
-﻿namespace KeycloakProvider;
+﻿using System.Diagnostics.CodeAnalysis;
+
+namespace KeycloakProvider;
 
 sealed class KeycloakRolesProvider : BaseProviderAdmin, IKeycloakRolesProvider
 {
-    public KeycloakRolesProvider(KeycloakProviderConfig config) : base(config)
+    public KeycloakRolesProvider(KeycloakProviderConfig config, HttpClient c) : base(config, c)
     {
     }
 
@@ -62,28 +64,29 @@ sealed class KeycloakRolesProvider : BaseProviderAdmin, IKeycloakRolesProvider
         ArgumentNullException.ThrowIfNull(roleId);
         ArgumentNullException.ThrowIfNull(request);
         if (!request.Values.Any()) throw new ArgumentException(Errors.RequestEmpty);
-        
-        if (request.Values["attributes"] is Dictionary<string, string[]?> attrs)
+
+        if (request.Values.TryGetValue("attributes", out var a) && a is Dictionary<string, string[]?> attrs)
         {
             var role = await GetById(roleId);
             if (role == null) return false;
 
             attrs.MergeExistingAttributes(role.Attributes);
         }
-        
+
         var req = await BuildMessage($"roles-by-id/{roleId}", HttpMethod.Put, request);
         return await SendWithoutResponse(req);
     }
 
     #region internals
 
-    public sealed record KeycloakRoleInternal(string                       Id,
-                                              string                       Name,
-                                              string                       Description,
-                                              bool                         Composite,
-                                              bool                         ClientRole,
-                                              string                       ContainerId,
-                                              Dictionary<string, string[]> Attributes);
+    [ExcludeFromCodeCoverage]
+    internal sealed record KeycloakRoleInternal(string                       Id,
+                                                string                       Name,
+                                                string                       Description,
+                                                bool                         Composite,
+                                                bool                         ClientRole,
+                                                string                       ContainerId,
+                                                Dictionary<string, string[]> Attributes);
 
     #endregion
 }

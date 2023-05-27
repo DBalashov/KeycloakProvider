@@ -1,4 +1,6 @@
-﻿namespace KeycloakProvider;
+﻿using System.Diagnostics.CodeAnalysis;
+
+namespace KeycloakProvider;
 
 public sealed class KeycloakFindUser
 {
@@ -26,5 +28,6 @@ public sealed class KeycloakFindUser
 
     internal string AsQueryString() => string.Join("&", filters.Select(p => p.Key + "=" + p.Value));
 
+    [ExcludeFromCodeCoverage]
     public override string ToString() => string.Join("&", filters.Select(p => p.Key + "=" + p.Value));
 }

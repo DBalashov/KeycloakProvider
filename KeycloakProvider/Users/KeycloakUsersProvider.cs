@@ -1,8 +1,10 @@
-﻿namespace KeycloakProvider;
+﻿using System.Diagnostics.CodeAnalysis;
+
+namespace KeycloakProvider;
 
 sealed class KeycloakUsersProvider : BaseProviderAdmin, IKeycloakUsersProvider
 {
-    public KeycloakUsersProvider(KeycloakProviderConfig config) : base(config)
+    internal KeycloakUsersProvider(KeycloakProviderConfig config, HttpClient c) : base(config, c)
     {
     }
 
@@ -50,7 +52,7 @@ sealed class KeycloakUsersProvider : BaseProviderAdmin, IKeycloakUsersProvider
         ArgumentNullException.ThrowIfNull(request);
         if (!request.Values.Any()) throw new ArgumentException(Errors.RequestEmpty);
 
-        if (request.Values["attributes"] is Dictionary<string, string[]?> attrs)
+        if (request.Values.TryGetValue("attributes", out var a) && a is Dictionary<string, string[]?> attrs)
         {
             var user = await GetById(userId);
             if (user == null) return false;
@@ -107,9 +109,10 @@ sealed class KeycloakUsersProvider : BaseProviderAdmin, IKeycloakUsersProvider
                                                    p.clients))
               .ToArray();
     }
-    
+
     #region internals
 
+    [ExcludeFromCodeCoverage]
     KeycloakUser convert(KeycloakUserInternal from) =>
         new(from.id,
             DateTime.UnixEpoch.AddMilliseconds(from.createdTimestamp),
@@ -120,27 +123,30 @@ sealed class KeycloakUsersProvider : BaseProviderAdmin, IKeycloakUsersProvider
             from.attributes?.ToDictionary(p => p.Key, p => p.Value.First()),
             from.federatedIdentities?.Select(p => new KeycloakUserFederatedIdentity(p.identityProvider, p.userId, p.userName)).ToArray());
 
-    sealed record KeycloakUserInternal(string                                  id,
-                                       Int64                                   createdTimestamp,
-                                       bool                                    enabled,
-                                       string?                                 firstName,
-                                       string?                                 lastName,
-                                       string                                  email,
-                                       Dictionary<string, string[]>?           attributes,
-                                       KeycloakUserFederatedIdentityInternal[] federatedIdentities);
+    [ExcludeFromCodeCoverage]
+    internal sealed record KeycloakUserInternal(string                                  id,
+                                                Int64                                   createdTimestamp,
+                                                bool                                    enabled,
+                                                string?                                 firstName,
+                                                string?                                 lastName,
+                                                string                                  email,
+                                                Dictionary<string, string[]>?           attributes,
+                                                KeycloakUserFederatedIdentityInternal[] federatedIdentities);
 
-    sealed record KeycloakUserFederatedIdentityInternal(string identityProvider,
-                                                        string userId,
-                                                        string userName);
+    [ExcludeFromCodeCoverage]
+    internal sealed record KeycloakUserFederatedIdentityInternal(string identityProvider,
+                                                                 string userId,
+                                                                 string userName);
 
-    sealed record KeycloakUserSessionInternal(string                     id,
-                                              string                     username,
-                                              string                     userid,
-                                              string                     ipaddress,
-                                              Int64                      start,
-                                              Int64                      lastAccess,
-                                              bool                       rememberMe,
-                                              Dictionary<string, string> clients);
+    [ExcludeFromCodeCoverage]
+    internal sealed record KeycloakUserSessionInternal(string                     id,
+                                                       string                     username,
+                                                       string                     userid,
+                                                       string                     ipaddress,
+                                                       Int64                      start,
+                                                       Int64                      lastAccess,
+                                                       bool                       rememberMe,
+                                                       Dictionary<string, string> clients);
 
     #endregion
 }

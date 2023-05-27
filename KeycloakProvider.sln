@@ -4,6 +4,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KeycloakProvider", "Keycloa
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleApp1", "ConsoleApp1\ConsoleApp1.csproj", "{C900C34D-E080-460C-8F53-1BA3BCB71738}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KeycloakProvider.Tests", "KeycloakProvider.Tests\KeycloakProvider.Tests.csproj", "{AD5150D8-7D7C-432C-B891-868A2E8CCD7E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -18,5 +20,9 @@ Global
 		{C900C34D-E080-460C-8F53-1BA3BCB71738}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C900C34D-E080-460C-8F53-1BA3BCB71738}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C900C34D-E080-460C-8F53-1BA3BCB71738}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AD5150D8-7D7C-432C-B891-868A2E8CCD7E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AD5150D8-7D7C-432C-B891-868A2E8CCD7E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AD5150D8-7D7C-432C-B891-868A2E8CCD7E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AD5150D8-7D7C-432C-B891-868A2E8CCD7E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

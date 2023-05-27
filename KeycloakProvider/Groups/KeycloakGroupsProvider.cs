@@ -1,8 +1,10 @@
-﻿namespace KeycloakProvider;
+﻿using System.Diagnostics.CodeAnalysis;
+
+namespace KeycloakProvider;
 
 sealed class KeycloakGroupsProvider : BaseProviderAdmin, IKeycloakGroupsProvider
 {
-    public KeycloakGroupsProvider(KeycloakProviderConfig config) : base(config)
+    internal KeycloakGroupsProvider(KeycloakProviderConfig config, HttpClient c) : base(config, c)
     {
     }
 
@@ -47,14 +49,14 @@ sealed class KeycloakGroupsProvider : BaseProviderAdmin, IKeycloakGroupsProvider
         ArgumentNullException.ThrowIfNull(request);
         if (!request.Values.Any()) throw new ArgumentException(Errors.RequestEmpty);
 
-        if (request.Values["attributes"] is Dictionary<string, string[]?> attrs)
+        if (request.Values.TryGetValue("attributes", out var a) && a is Dictionary<string, string[]?> attrs)
         {
             var group = await GetById(groupId);
             if (group == null) return false;
 
             attrs.MergeExistingAttributes(group.Attributes);
         }
-        
+
         var req = await BuildMessage($"groups/{groupId}", HttpMethod.Put, request);
         return await SendWithoutResponse(req);
     }
@@ -66,13 +68,14 @@ sealed class KeycloakGroupsProvider : BaseProviderAdmin, IKeycloakGroupsProvider
             from.Attributes.ToDictionary(p => p.Key, p => p.Value[0]),
             from.Subgroups.Select(convert).ToArray());
 
-    sealed record KeycloakGroupDetailInternal(string                        ID,
-                                              string                        Name,
-                                              string                        Path,
-                                              string[]                      RealmRoles,
-                                              KeycloakGroupAccess           Access,
-                                              Dictionary<string, string[]>  Attributes,
-                                              KeycloakGroupDetailInternal[] Subgroups);
+    [ExcludeFromCodeCoverage]
+    internal sealed record KeycloakGroupDetailInternal(string                        ID,
+                                                       string                        Name,
+                                                       string                        Path,
+                                                       string[]                      RealmRoles,
+                                                       KeycloakGroupAccess           Access,
+                                                       Dictionary<string, string[]>  Attributes,
+                                                       KeycloakGroupDetailInternal[] Subgroups);
 
     #endregion
 }

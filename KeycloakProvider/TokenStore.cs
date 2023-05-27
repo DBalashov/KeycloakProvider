@@ -107,8 +107,8 @@ sealed class TokenStore
 
     #endregion
 
-    sealed record InternalTokenContainer(string access_token,
-                                         string refresh_token,
-                                         int expires_in,
-                                         DateTime Expired);
+    internal sealed record InternalTokenContainer(string   access_token,
+                                                  string   refresh_token,
+                                                  int      expires_in,
+                                                  DateTime Expired);
 }

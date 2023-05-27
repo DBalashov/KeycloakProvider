@@ -8,7 +8,7 @@ abstract class BaseProviderAdmin : BaseProvider<KeycloakProviderConfig>
 {
     readonly TokenStore tokenStore;
 
-    protected BaseProviderAdmin(KeycloakProviderConfig config) : base(config) =>
+    protected BaseProviderAdmin(KeycloakProviderConfig config, HttpClient c) : base(config, c) =>
         tokenStore = new TokenStore(c, Url, config);
 
     protected async Task<HttpRequestMessage> BuildMessage(string suffix, HttpMethod? method = null, KeycloakRequest? body = null)

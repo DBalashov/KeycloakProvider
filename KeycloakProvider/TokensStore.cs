@@ -12,9 +12,10 @@ namespace KeycloakProvider;
 /// </summary>
 public sealed class TokensStore
 {
-    readonly IKeycloakProviderAuth authProvider;
-    readonly IMemoryCache          cache     = new MemoryCache(new MemoryCacheOptions());
-    readonly SemaphoreSlim         semaphore = new(1, 1);
+    IKeycloakProviderAuth authProvider;
+
+    readonly IMemoryCache  cache     = new MemoryCache(new MemoryCacheOptions());
+    readonly SemaphoreSlim semaphore = new(1, 1);
 
     public TokensStore(IKeycloakProviderAuth authProvider) => this.authProvider = authProvider;
 

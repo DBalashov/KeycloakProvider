@@ -2,7 +2,7 @@
 
 sealed class KeycloakUserGroupsProvider : BaseProviderAdmin, IKeycloakUserGroupsProvider
 {
-    public KeycloakUserGroupsProvider(KeycloakProviderConfig config) : base(config)
+    public KeycloakUserGroupsProvider(KeycloakProviderConfig config, HttpClient c) : base(config, c)
     {
     }
 

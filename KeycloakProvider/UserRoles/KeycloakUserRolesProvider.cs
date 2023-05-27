@@ -2,9 +2,9 @@
 
 sealed class KeycloakUserRolesProvider : BaseProviderAdmin, IKeycloakUserRolesProvider
 {
-    readonly IKeycloakProvider parent;
+    readonly IKeycloakRolesProvider rolesProvider;
 
-    public KeycloakUserRolesProvider(KeycloakProviderConfig config, IKeycloakProvider parent) : base(config) => this.parent = parent;
+    public KeycloakUserRolesProvider(KeycloakProviderConfig config, IKeycloakRolesProvider rolesProvider, HttpClient c) : base(config, c) => this.rolesProvider = rolesProvider;
 
     public async Task<UserRoleItem[]> GetItems(string userId)
     {
@@ -46,7 +46,7 @@ sealed class KeycloakUserRolesProvider : BaseProviderAdmin, IKeycloakUserRolesPr
         ArgumentNullException.ThrowIfNull(roleIds);
         if (!roleIds.Any()) throw new ArgumentException(Errors.RequestEmpty);
 
-        var roles = await parent.Roles.GetItems();
+        var roles = await rolesProvider.GetItems();
         return roles.Where(p => roleIds.Contains(p.ID)).ToArray();
     }
 
