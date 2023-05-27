@@ -20,13 +20,13 @@ await provider.Roles.Update(role.ID,
                             new KeycloakUpdateRole().Name("TestRole New Name")
                                                     .ClientRole(true)
                                                     .Description("Some description"));
-// update role attributes
-await provider.Roles.UpdateAttributes(role.ID,
-                                      new Dictionary<string, string?>()
-                                      {
-                                         ["attrib1"] = "value1",
-                                         ["attrib2"] = "value2",
-                                      });
+// update attributes
+await provider.Roles.Update(userId,
+                            new KeycloakUpdateRole().Attributes(new Dictionary<string, string?>()
+                                                                {
+                                                                    ["a1"] = null, // null value means delete attribute
+                                                                    ["attr1"] = "new value 1A"
+                                                                }));
                                                
 // delete role
 await provider.Roles.Delete(role.ID);
@@ -48,14 +48,25 @@ await provider.Users.Create(new KeycloakCreateUser("a@b.com").Password("123")
                                                                              ["attrib4"] = "value 4"
                                                                          }));
 // find user by mail
-var user = (await provider.Users.Find(true, new KeycloakFindUser(KeycloakFilter.Mail, "a@b.ru"))).First();
+var user = (await provider.Users.Find(true, new KeycloakFindUser(KeycloakFilter.Mail, "a@b.com"))).First();
 
 // update user with state, password, name and attributes
-await provider.Users.Update(user.ID, new KeycloakUpdateUser().Password("456")
-                                                             .Name("First name", "Last name")
-                                                             .Enabled(true)
-                                                             .AddAttribute("attrib5", "value 5"));
-                                                             
+await provider.Users.Update(user.ID, 
+                            new KeycloakUpdateUser().Password("456")
+                                                    .Name("First name", "Last name")
+                                                    .Enabled(true)
+                                                    .AddAttribute("attrib5", "value 5"));
+// disable user
+await provider.Users.Update(userId,
+                            new KeycloakUpdateUser().Enabled(false));
+
+// update attributes
+await provider.Users.Update(userId,
+                            new KeycloakUpdateUser().Attributes(new Dictionary<string, string?>()
+                                                                {
+                                                                    ["a1"] = null, // null value means delete attribute
+                                                                    ["attr1"] = "new value 1A"
+                                                                }));
 // get user sessions
 foreach(var session in await provider.Users.GetSessions(user.ID))
     Console.WriteLine($"{session.SessionId}: {session.Started}, {session.IPAddress}");
@@ -84,17 +95,38 @@ foreach (var group in groups)
 
 // update group
 var g = groups.First(p => p.Name == "Test group");
-await provider.Groups.Update(g.ID, new KeycloakUpdateGroup().AddAttribute("attr2", "value2"));
+await provider.Groups.Update(g.ID,
+                             new KeycloakUpdateGroup().AddAttribute("attr2", "value2"));
 
-// update group attributes
-await provider.Groups.UpdateAttributes(g.ID, new Dictionary<string, string?>()
-                                             {
-                                                 ["attr2"] = null,
-                                                 ["attr1"] = "new value 1"
-                                             });
-
+// update attributes
+await provider.Groups.Update(g.ID,
+                             new KeycloakUpdateGroup().Attributes(new Dictionary<string, string?>()
+                                                                  {
+                                                                      ["a1"] = null, // null value means delete attribute
+                                                                      ["attr1"] = "new value 1A"
+                                                                  }));
 // delete group
 await provider.Groups.Delete(g.ID);
+```
+
+## User-Groups management
+
+```csharp
+var user = (await provider.Users.Find(true, new KeycloakFindUser(KeycloakFilter.Mail, "a@b.com"))).First();
+var groups = await provider.Groups.GetItems();
+var isUserAddedToGroup = await provider.Users.AddToGroup(userId, groups.First().ID);
+var isUserRemovedFromGroup = await provider.Users.RemoveFromGroup(userId, groups.First().ID);
+
+```
+
+## User-Roles management
+
+```csharp
+var user = (await provider.Users.Find(true, new KeycloakFindUser(KeycloakFilter.Mail, "a@b.com"))).First();
+var roles = await provider.Roles.GetItems();
+var role = roles.First(p => p.Name == "TestRole");
+var isUserAssigned = await provider.UserRoles.Assign(userId, role.ID);
+var isUserUnassigned = await provider.UserRoles.Unassign(userId, role.ID);
 ```
 
 ## Authenticate via API with Direct Access grants
@@ -106,7 +138,7 @@ var kp = new KeycloakProviderAuthImp(config);
 var accessToken = (await kp.GetToken("a@b.com", "12345678")).AccessToken;
 ```
 
-for authenticate client must be configured with Direct Access grants
+for authenticate via DAG: client must be configured with Direct Access grants
 
 ![pic1.png](images/pic1.png)
 

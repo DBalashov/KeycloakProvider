@@ -48,44 +48,17 @@ sealed class KeycloakUsersProvider : BaseProviderAdmin, IKeycloakUsersProvider
     {
         ArgumentNullException.ThrowIfNull(userId);
         ArgumentNullException.ThrowIfNull(request);
-
         if (!request.Values.Any()) throw new ArgumentException(Errors.RequestEmpty);
 
+        if (request.Values["attributes"] is Dictionary<string, string[]?> attrs)
+        {
+            var user = await GetById(userId);
+            if (user == null) return false;
+
+            attrs.MergeExistingAttributes(user.Attributes);
+        }
+
         var req = await BuildMessage($"users/{userId}", HttpMethod.Put, request);
-        return await SendWithoutResponse(req);
-    }
-
-    #endregion
-
-    public async Task<KeycloakUserGroup[]> GetGroups(string userId)
-    {
-        ArgumentNullException.ThrowIfNull(userId);
-
-        var req    = await BuildMessage($"users/{userId}/groups", HttpMethod.Get);
-        var groups = await SendAndGetResponse<KeycloakUserGroup[]>(req);
-        return groups ?? Array.Empty<KeycloakUserGroup>();
-    }
-
-    #region ChangeState / UpdateAttributes
-
-    public async Task<bool> ChangeState(string userId, bool newState)
-    {
-        ArgumentNullException.ThrowIfNull(userId);
-
-        var req = await BuildMessage($"users/{userId}", HttpMethod.Put, new KeycloakChangeState(newState));
-        return await SendWithoutResponse(req);
-    }
-
-    public async Task<bool> UpdateAttributes(string userId, Dictionary<string, string?> attributes)
-    {
-        ArgumentNullException.ThrowIfNull(userId);
-        ArgumentNullException.ThrowIfNull(attributes);
-
-        var user = await GetById(userId);
-        if (user == null) return false;
-
-        var newAttributes = user.Attributes.MergeAttributes(attributes);
-        var req           = await BuildMessage($"users/{userId}", HttpMethod.Put, new KeycloakUpdateAttribute(newAttributes));
         return await SendWithoutResponse(req);
     }
 
@@ -134,7 +107,7 @@ sealed class KeycloakUsersProvider : BaseProviderAdmin, IKeycloakUsersProvider
                                                    p.clients))
               .ToArray();
     }
-
+    
     #region internals
 
     KeycloakUser convert(KeycloakUserInternal from) =>

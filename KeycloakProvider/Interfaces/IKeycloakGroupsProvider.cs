@@ -11,6 +11,4 @@ public interface IKeycloakGroupsProvider
     Task Create(KeycloakCreateGroup request);
 
     Task<bool> Update(string groupId, KeycloakUpdateGroup request);
-
-    Task<bool> UpdateAttributes(string groupId, Dictionary<string, string?> attributes);
 }

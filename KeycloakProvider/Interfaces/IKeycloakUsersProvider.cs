@@ -12,13 +12,7 @@ public interface IKeycloakUsersProvider
 
     Task<bool> Update(string userId, KeycloakUpdateUser request);
 
-    Task<bool> ChangeState(string userId, bool newState);
-
-    Task<bool> UpdateAttributes(string userId, Dictionary<string, string?> attributes);
-
     Task<string[]> GetDisabled(params string[] userIds);
-
-    Task<KeycloakUserGroup[]> GetGroups(string userId);
 
     Task ResetPassword(string userId, string password);
 

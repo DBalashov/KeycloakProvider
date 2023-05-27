@@ -61,23 +61,17 @@ sealed class KeycloakRolesProvider : BaseProviderAdmin, IKeycloakRolesProvider
     {
         ArgumentNullException.ThrowIfNull(roleId);
         ArgumentNullException.ThrowIfNull(request);
-
         if (!request.Values.Any()) throw new ArgumentException(Errors.RequestEmpty);
+        
+        if (request.Values["attributes"] is Dictionary<string, string[]?> attrs)
+        {
+            var role = await GetById(roleId);
+            if (role == null) return false;
 
+            attrs.MergeExistingAttributes(role.Attributes);
+        }
+        
         var req = await BuildMessage($"roles-by-id/{roleId}", HttpMethod.Put, request);
-        return await SendWithoutResponse(req);
-    }
-
-    public async Task<bool> UpdateAttributes(string roleId, Dictionary<string, string?> attributes)
-    {
-        ArgumentNullException.ThrowIfNull(roleId);
-        ArgumentNullException.ThrowIfNull(attributes);
-
-        var role = await GetById(roleId);
-        if (role == null) return false;
-
-        var newAttributes = role.Attributes.MergeAttributes(attributes);
-        var req           = await BuildMessage($"roles-by-id/{roleId}", HttpMethod.Put, new KeycloakUpdateRoleAttributes(role.Name, newAttributes));
         return await SendWithoutResponse(req);
     }
 

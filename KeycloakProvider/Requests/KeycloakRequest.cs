@@ -3,11 +3,11 @@ using System.Text.Json;
 
 namespace KeycloakProvider;
 
-public abstract class KeycloakRequest : IAttributableEntity
+public abstract class KeycloakRequest
 {
-    public Dictionary<string, object> Values { get; } = new();
+    internal Dictionary<string, object> Values { get; } = new();
 
-    internal HttpContent AsHttpContent() => new StringContent(JsonSerializer.Serialize(Values), Encoding.UTF8, "application/json");
+    internal virtual HttpContent AsHttpContent() => new StringContent(JsonSerializer.Serialize(Values), Encoding.UTF8, "application/json");
     
     public override string ToString() => string.Join("&", Values.Select(p => p.Key + "=" + p.Value));
 }

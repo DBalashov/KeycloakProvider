@@ -13,10 +13,6 @@ public sealed record KeycloakUserFederatedIdentity(string IdentityProvider,
                                                    string UserId,
                                                    string UserName);
 
-public sealed record KeycloakUserGroup(string ID, string Name, string Path);
-
-
-
 public enum KeycloakFilter
 {
     Mail,

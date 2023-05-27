@@ -47,20 +47,15 @@ sealed class KeycloakGroupsProvider : BaseProviderAdmin, IKeycloakGroupsProvider
         ArgumentNullException.ThrowIfNull(request);
         if (!request.Values.Any()) throw new ArgumentException(Errors.RequestEmpty);
 
+        if (request.Values["attributes"] is Dictionary<string, string[]?> attrs)
+        {
+            var group = await GetById(groupId);
+            if (group == null) return false;
+
+            attrs.MergeExistingAttributes(group.Attributes);
+        }
+        
         var req = await BuildMessage($"groups/{groupId}", HttpMethod.Put, request);
-        return await SendWithoutResponse(req);
-    }
-
-    public async Task<bool> UpdateAttributes(string groupId, Dictionary<string, string?> attributes)
-    {
-        ArgumentNullException.ThrowIfNull(groupId);
-        ArgumentNullException.ThrowIfNull(attributes);
-
-        var group = await GetById(groupId);
-        if (group == null) return false;
-
-        var newAttributes = group.Attributes.MergeAttributes(attributes);
-        var req           = await BuildMessage($"groups/{groupId}", HttpMethod.Put, new KeycloakUpdateGroupAttributes(group.Name, newAttributes));
         return await SendWithoutResponse(req);
     }
 

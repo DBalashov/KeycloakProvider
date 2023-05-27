@@ -10,14 +10,12 @@ public interface IKeycloakProvider
 
     /// <summary> Roles related operations </summary>
     IKeycloakRolesProvider Roles { get; }
+    
+    /// <summary> User/groups related operations </summary>
+    IKeycloakUserGroupsProvider UserGroups { get; }
 }
 
-public interface IAttributableEntity
-{
-    Dictionary<string, object> Values { get; }
-}
-
-public interface INamedEntity : IAttributableEntity
+public interface INamedEntity
 {
     
 }
