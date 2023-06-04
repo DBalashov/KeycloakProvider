@@ -13,12 +13,14 @@ public sealed class KeycloakProviderImp : IKeycloakProvider
     IKeycloakRolesProvider?      roles;
     IKeycloakUserGroupsProvider? userGroups;
     IKeycloakUserRolesProvider?  userRoles;
+    IKeycloakClientsProvider?    clientRoles;
 
     public IKeycloakUsersProvider      Users      => users ??= new KeycloakUsersProvider(config, c);
     public IKeycloakGroupsProvider     Groups     => groups ??= new KeycloakGroupsProvider(config, c);
     public IKeycloakRolesProvider      Roles      => roles ??= new KeycloakRolesProvider(config, c);
     public IKeycloakUserGroupsProvider UserGroups => userGroups ??= new KeycloakUserGroupsProvider(config, c);
     public IKeycloakUserRolesProvider  UserRoles  => userRoles ??= new KeycloakUserRolesProvider(config, Roles, c);
+    public IKeycloakClientsProvider    Clients    => clientRoles ??= new KeycloakClientsProvider(config, c);
 
     public KeycloakProviderImp(KeycloakProviderConfig config, HttpClient? c = null)
     {
