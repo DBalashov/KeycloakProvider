@@ -33,9 +33,9 @@ abstract class BaseProviderAdmin : BaseProvider<KeycloakProviderConfig>
     protected async Task<T?> SendAndGetResponse<T>(HttpRequestMessage req) where T : class
     {
         var resp = await c.SendAsync(req);
-        if (resp.StatusCode == HttpStatusCode.NotFound) return null;
-
-        return await resp.EnsureSuccessStatusCode().Content.ReadFromJsonAsync<T>();
+        return resp.StatusCode == HttpStatusCode.NotFound 
+                   ? null 
+                   : await resp.EnsureSuccessStatusCode().Content.ReadFromJsonAsync<T>();
     }
 
     protected async Task<bool> SendWithoutResponse(HttpRequestMessage req, bool falseIfNotFound = true)
